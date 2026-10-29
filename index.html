@@ -3,71 +3,66 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TKA SMK TJKT - Simulasi & Portal Ujian</title>
+  <title>TKA SMK TJKT - Bank Soal & Pembahasan</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    .bg-navy-dark { background-color: #0d1527; }
-    .bg-navy-card { background-color: #162238; }
-    .bg-navy-input { background-color: #1a2942; }
-    .text-cyan-glow { color: #38bdf8; text-shadow: 0 0 10px rgba(56, 189, 248, 0.4); }
+    .bg-navy-dark { background-color: #0b1329; }
+    .bg-navy-card { background-color: #111c38; }
+    .bg-input-light { background-color: #f8fafc; }
   </style>
 </head>
-<body class="bg-navy-dark text-slate-100 font-sans min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+<body class="bg-navy-dark text-slate-100 font-sans min-h-screen flex flex-col selection:bg-blue-600 selection:text-white">
 
-  <!-- NAVBAR -->
-  <header class="border-b border-slate-800 bg-navy-dark/80 backdrop-blur sticky top-0 z-40">
+  <!-- NAVBAR HEADER -->
+  <header class="border-b border-slate-800/80 bg-navy-dark/90 backdrop-blur sticky top-0 z-40">
     <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
       <div class="flex items-center space-x-3 cursor-pointer" onclick="showView('viewLanding')">
-        <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-indigo-600 to-blue-400 flex items-center justify-center font-extrabold text-white text-xl shadow-lg">
-          <i class="fa-solid fa-network-wired text-sm"></i>
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center font-extrabold text-white text-lg shadow-lg shadow-blue-600/30">
+          <i class="fa-solid fa-network-wired"></i>
         </div>
         <div>
           <h1 class="font-bold text-base leading-tight tracking-wide text-white">TKA SMK TJKT</h1>
-          <p class="text-[10px] text-slate-400 uppercase tracking-wider">Bank 400 Soal & Pembahasan</p>
+          <p class="text-[10px] text-slate-400 font-medium tracking-wider">Bank 400 Soal & Pembahasan</p>
         </div>
       </div>
       
       <div class="flex items-center space-x-3">
-        <!-- Status Login User -->
-        <div id="userProfileBadge" class="hidden items-center space-x-2 bg-navy-card border border-slate-700/60 px-3 py-1.5 rounded-full">
-          <span id="userRoleBadge" class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">User</span>
-          <span id="userEmailDisplay" class="text-xs font-medium text-slate-200">user@example.com</span>
+        <!-- Status User Login -->
+        <div id="userBadge" class="hidden items-center space-x-2 bg-slate-800/80 border border-slate-700 px-3 py-1.5 rounded-full text-xs">
+          <span id="roleLabel" class="bg-blue-600/30 text-blue-400 border border-blue-500/30 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Siswa</span>
+          <span id="userDisplayName" class="text-slate-200 font-medium">Siswa TKA</span>
         </div>
 
-        <!-- Tombol Admin Monitoring (Hanya muncul jika diklik/akses admin) -->
-        <button id="btnAdminNav" onclick="showView('viewAdminDashboard')" class="hidden text-xs bg-indigo-600/80 hover:bg-indigo-600 text-white font-semibold px-3 py-2 rounded-lg transition border border-indigo-500/40">
-          <i class="fa-solid fa-chart-line mr-1"></i> Dashboard Admin
+        <button id="btnAdminView" onclick="showView('viewAdmin')" class="hidden text-xs bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 font-semibold px-3 py-2 rounded-lg transition">
+          <i class="fa-solid fa-gauge mr-1"></i> Panel Admin
         </button>
 
-        <!-- Tombol Auth Publik -->
-        <div id="authButtons" class="flex items-center space-x-2">
-          <button onclick="openAuthModal('register')" class="text-xs bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 rounded-lg shadow-lg shadow-blue-600/20 transition flex items-center">
-            <i class="fa-solid fa-user-plus mr-1.5 text-xs"></i> Daftar
+        <div id="guestButtons" class="flex items-center space-x-2">
+          <button onclick="openModal('register')" class="text-xs bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 rounded-lg shadow-md shadow-blue-600/30 transition">
+            <i class="fa-solid fa-user-plus mr-1"></i> Daftar
           </button>
-          <button onclick="openAuthModal('login')" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-4 py-2 rounded-lg border border-slate-700 transition">
+          <button onclick="openModal('login')" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-4 py-2 rounded-lg border border-slate-700 transition">
             Masuk
           </button>
         </div>
 
-        <!-- Tombol Logout -->
-        <button id="btnLogout" onclick="handleLogout()" class="hidden text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 font-semibold px-3 py-2 rounded-lg border border-red-500/30 transition">
-          <i class="fa-solid fa-right-from-bracket mr-1"></i> Keluar
+        <button id="btnLogout" onclick="handleLogout()" class="hidden text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 font-semibold px-3 py-2 rounded-lg transition">
+          <i class="fa-solid fa-right-from-bracket"></i>
         </button>
       </div>
     </div>
   </header>
 
-  <!-- MAIN CONTENT -->
-  <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-6">
+  <!-- MAIN CONTAINER -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-8">
 
     <!-- VIEW: LANDING PAGE -->
     <div id="viewLanding" class="space-y-10">
-      <!-- HERO SECTION -->
-      <section class="relative bg-gradient-to-b from-navy-card/60 to-transparent p-8 md:p-12 rounded-2xl border border-slate-800 overflow-hidden">
-        <div class="inline-flex items-center space-x-2 bg-blue-950/80 border border-blue-800/50 text-blue-300 text-xs px-3.5 py-1.5 rounded-full mb-6">
-          <i class="fa-solid fa-graduation-cap"></i>
+      <section class="relative bg-gradient-to-b from-navy-card/80 to-navy-dark p-8 md:p-12 rounded-3xl border border-slate-800 overflow-hidden shadow-2xl">
+        <div class="inline-flex items-center space-x-2 bg-blue-950/80 border border-blue-800/60 text-blue-300 text-xs px-3.5 py-1.5 rounded-full mb-6">
+          <i class="fa-solid fa-award"></i>
           <span>TKA 2026/2027. Dari SMK untuk SMK</span>
         </div>
 
@@ -76,22 +71,22 @@
         </h2>
 
         <p class="text-slate-400 text-sm md:text-base max-w-2xl mb-8 leading-relaxed">
-          Aplikasi interaktif terpadu untuk penguasaan kompetensi kejuruan Teknik Jaringan Komputer dan Telekomunikasi. Dilengkapi dengan sistem skor real-time, pembahasan otomatis, serta pemantauan hasil ujian admin.
+          Aplikasi interaktif terpadu untuk penguasaan kompetensi kejuruan Teknik Jaringan Komputer dan Telekomunikasi. Dilengkapi materi pembelajaran, sistem skor real-time, serta pembahasan otomatis.
         </p>
 
         <div class="flex flex-wrap gap-4 items-center mb-10">
-          <button onclick="openAuthModal('register')" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold px-6 py-3 rounded-xl shadow-lg shadow-amber-500/20 text-sm flex items-center transition">
+          <button onclick="openModal('register')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold px-6 py-3 rounded-xl shadow-lg shadow-amber-500/20 text-sm flex items-center transition">
             <i class="fa-solid fa-trophy mr-2"></i> Top Skor & Leaderboard
           </button>
-          <button onclick="startExamSim()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-6 py-3 rounded-xl shadow-lg shadow-indigo-600/20 text-sm flex items-center transition">
-            <i class="fa-solid fa-play mr-2"></i> Coba Simulasi Ujian
+          <button onclick="startExamSim()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-3 rounded-xl shadow-lg shadow-blue-600/30 text-sm flex items-center transition">
+            <i class="fa-solid fa-play mr-2"></i> Mulai Ujian Simulasi
           </button>
         </div>
 
         <!-- COUNTER STATS -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t border-slate-800/80">
           <div>
-            <div class="text-3xl md:text-4xl font-black text-white tracking-tight mb-1">3349 <span class="text-indigo-400 text-lg">👤</span></div>
+            <div class="text-3xl md:text-4xl font-black text-white tracking-tight mb-1">3349 <span class="text-blue-400 text-lg">👤</span></div>
             <p class="text-xs text-slate-400">Total Siswa Terdaftar</p>
           </div>
           <div>
@@ -106,12 +101,343 @@
       </section>
     </div>
 
-    <!-- VIEW: ENGINE UJIAN (CBT) -->
+    <!-- VIEW: EXAM SIMULATOR -->
     <div id="viewExam" class="hidden space-y-6">
       <div class="bg-navy-card p-4 rounded-xl border border-slate-800 flex justify-between items-center">
         <div>
-          <h3 class="font-bold text-white">Simulasi TKA Jaringan Komputer 2026</h3>
-          <p class="text-xs text-slate-400" id="examUserLabel">Peserta: Guest / Belum Login</p>
+          <h3 class="font-bold text-white text-base">Simulasi TKA Jaringan Komputer 2026</h3>
+          <p id="examUserDetail" class="text-xs text-slate-400">Peserta: Guest / Belum Login</p>
         </div>
+        <button onclick="showView('viewLanding')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition">
+          Selesaikan Ujian
+        </button>
+      </div>
+      <div class="bg-navy-card p-6 rounded-xl border border-slate-800">
+        <p class="text-slate-300 text-sm mb-4">1. Berapakah jumlah IP Host maksimum pada subnet mask /26?</p>
+        <div class="space-y-2">
+          <label class="block p-3 rounded-lg border border-slate-700 bg-slate-900/50 text-xs text-slate-300 hover:border-blue-500 cursor-pointer">
+            <input type="radio" name="q1" class="mr-2"> A. 30 Host
+          </label>
+          <label class="block p-3 rounded-lg border border-blue-500 bg-blue-950/40 text-xs text-blue-200 font-semibold cursor-pointer">
+            <input type="radio" name="q1" checked class="mr-2"> B. 62 Host
+          </label>
+          <label class="block p-3 rounded-lg border border-slate-700 bg-slate-900/50 text-xs text-slate-300 hover:border-blue-500 cursor-pointer">
+            <input type="radio" name="q1" class="mr-2"> C. 126 Host
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: ADMIN DASHBOARD -->
+    <div id="viewAdmin" class="hidden space-y-6">
+      <div class="flex justify-between items-center">
+        <h2 class="text-xl font-bold text-white">Monitoring Hasil Ujian Siswa (Admin)</h2>
+        <button onclick="loadAdminResults()" class="bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 font-semibold px-3 py-2 rounded-lg border border-slate-700">Refresh</button>
+      </div>
+      <div class="bg-navy-card border border-slate-800 rounded-xl overflow-hidden">
+        <table class="w-full text-left text-xs text-slate-300">
+          <thead class="bg-slate-900/80 text-slate-400 border-b border-slate-800 uppercase font-semibold">
+            <tr>
+              <th class="p-3.5">Siswa</th>
+              <th class="p-3.5">Sekolah</th>
+              <th class="p-3.5">Kota / Provinsi</th>
+              <th class="p-3.5">Skor</th>
+            </tr>
+          </thead>
+          <tbody id="adminTableBody" class="divide-y divide-slate-800/60">
+            <tr><td colspan="4" class="p-4 text-center text-slate-500">Belum ada data masuk.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL PENDAFTARAN & LOGIN (PERSIS GAMBAR PROMPT) -->
+  <div id="authModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50 overflow-y-auto">
+    <div class="bg-white text-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden my-8">
+      
+      <!-- HEADER MODAL -->
+      <div class="px-6 pt-5 pb-3 flex justify-between items-center border-b border-slate-100">
         <div class="flex items-center space-x-3">
-          <div class="bg-slate-900 border border-slate-700 px-3 py-1.5 rounded-lg text
+          <div class="w-9 h-9 rounded-full bg-blue-600 text-white font-extrabold flex items-center justify-center text-xs">
+            TK
+          </div>
+          <h3 id="modalHeaderTitle" class="font-bold text-slate-800 text-base">Pendaftaran Siswa TKA TJKT</h3>
+        </div>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 p-1 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-6 pt-4">
+        <!-- TAB TOGGLE DAFTAR / MASUK -->
+        <div class="bg-slate-100 p-1 rounded-xl flex mb-5">
+          <button id="tabBtnRegister" onclick="switchTab('register')" class="flex-1 py-2 rounded-lg text-xs font-bold bg-blue-600 text-white transition flex items-center justify-center space-x-1.5 shadow-sm">
+            <i class="fa-regular fa-user"></i>
+            <span>Daftar</span>
+          </button>
+          <button id="tabBtnLogin" onclick="switchTab('login')" class="flex-1 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition flex items-center justify-center space-x-1.5">
+            <i class="fa-solid fa-lock"></i>
+            <span>Masuk ke Akun</span>
+          </button>
+        </div>
+
+        <!-- FORM DAFTAR SISWA -->
+        <form id="formRegister" onsubmit="handleRegister(event)" class="space-y-3.5">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Nama Lengkap:</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs"><i class="fa-regular fa-user"></i></span>
+              <input type="text" id="regFullName" required placeholder="Contoh: Muhammad Ihsan" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white transition">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Provinsi:</label>
+              <input type="text" id="regProvince" required placeholder="Contoh: Jawa Barat" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white transition">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Kabupaten/Kota:</label>
+              <input type="text" id="regCity" required placeholder="Contoh: Kota Cimahi" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white transition">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Asal Sekolah:</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs"><i class="fa-solid fa-school"></i></span>
+              <input type="text" id="regSchool" required placeholder="SMKN 2 MAGETAN" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white transition">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Email:</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs"><i class="fa-regular fa-envelope"></i></span>
+              <input type="email" id="regEmail" required placeholder="akun email anda yang aktif" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white transition">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Kata Sandi:</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs"><i class="fa-solid fa-lock"></i></span>
+              <input type="password" id="regPassword" required placeholder="Minimal 6 karakter" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-8 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white transition">
+              <span onclick="togglePass('regPassword')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 text-xs cursor-pointer hover:text-slate-600"><i class="fa-regular fa-eye"></i></span>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Konfirmasi Kata Sandi:</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs"><i class="fa-solid fa-lock"></i></span>
+              <input type="password" id="regConfirmPassword" required placeholder="Masukkan ulang kata sandi Anda" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-8 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white transition">
+              <span onclick="togglePass('regConfirmPassword')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 text-xs cursor-pointer hover:text-slate-600"><i class="fa-regular fa-eye"></i></span>
+            </div>
+          </div>
+
+          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-xs transition shadow-md shadow-blue-600/30 mt-2">
+            Daftar Akun Siswa
+          </button>
+
+          <div class="text-center pt-2">
+            <button type="button" onclick="switchTab('login')" class="text-xs text-blue-600 font-semibold hover:underline">
+              Sudah punya akun siswa? Masuk di sini
+            </button>
+          </div>
+        </form>
+
+        <!-- FORM MASUK/LOGIN -->
+        <form id="formLogin" onsubmit="handleLogin(event)" class="space-y-4 hidden">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Email:</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs"><i class="fa-regular fa-envelope"></i></span>
+              <input type="email" id="loginEmail" required placeholder="Masukkan email terdaftar" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-600 focus:bg-white transition">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Kata Sandi:</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs"><i class="fa-solid fa-lock"></i></span>
+              <input type="password" id="loginPassword" required placeholder="Masukkan kata sandi" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-8 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-600 focus:bg-white transition">
+              <span onclick="togglePass('loginPassword')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 text-xs cursor-pointer hover:text-slate-600"><i class="fa-regular fa-eye"></i></span>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Masuk Sebagai:</label>
+            <select id="loginRole" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-600 transition font-medium">
+              <option value="siswa">Siswa / Peserta Ujian</option>
+              <option value="admin">Pengawas / Admin</option>
+            </select>
+          </div>
+
+          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-xs transition shadow-md shadow-blue-600/30 mt-2">
+            Masuk ke Akun
+          </button>
+
+          <div class="text-center pt-2">
+            <button type="button" onclick="switchTab('register')" class="text-xs text-blue-600 font-semibold hover:underline">
+              Belum punya akun? Daftar Akun Siswa
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    const SUPABASE_URL = localStorage.getItem('sb_url') || '';
+    const SUPABASE_KEY = localStorage.getItem('sb_key') || '';
+    let supabaseClient = null;
+
+    if (SUPABASE_URL && SUPABASE_KEY) {
+      supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
+
+    let currentUser = null;
+
+    function openModal(tab = 'register') {
+      document.getElementById('authModal').classList.remove('hidden');
+      switchTab(tab);
+    }
+
+    function closeModal() {
+      document.getElementById('authModal').classList.add('hidden');
+    }
+
+    function switchTab(tab) {
+      const btnReg = document.getElementById('tabBtnRegister');
+      const btnLog = document.getElementById('tabBtnLogin');
+      const formReg = document.getElementById('formRegister');
+      const formLog = document.getElementById('formLogin');
+      const headerTitle = document.getElementById('modalHeaderTitle');
+
+      if (tab === 'register') {
+        btnReg.className = "flex-1 py-2 rounded-lg text-xs font-bold bg-blue-600 text-white transition flex items-center justify-center space-x-1.5 shadow-sm";
+        btnLog.className = "flex-1 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition flex items-center justify-center space-x-1.5";
+        formReg.classList.remove('hidden');
+        formLog.classList.add('hidden');
+        headerTitle.innerText = "Pendaftaran Siswa TKA TJKT";
+      } else {
+        btnLog.className = "flex-1 py-2 rounded-lg text-xs font-bold bg-blue-600 text-white transition flex items-center justify-center space-x-1.5 shadow-sm";
+        btnReg.className = "flex-1 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition flex items-center justify-center space-x-1.5";
+        formLog.classList.remove('hidden');
+        formReg.classList.add('hidden');
+        headerTitle.innerText = "Masuk ke Akun TKA TJKT";
+      }
+    }
+
+    function togglePass(inputId) {
+      const input = document.getElementById(inputId);
+      input.type = input.type === 'password' ? 'text' : 'password';
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const name = document.getElementById('regFullName').value;
+      const province = document.getElementById('regProvince').value;
+      const city = document.getElementById('regCity').value;
+      const school = document.getElementById('regSchool').value;
+      const email = document.getElementById('regEmail').value;
+      const pass = document.getElementById('regPassword').value;
+      const confirmPass = document.getElementById('regConfirmPassword').value;
+
+      if (pass !== confirmPass) {
+        alert("Konfirmasi kata sandi tidak cocok!");
+        return;
+      }
+
+      if (supabaseClient) {
+        const { data, error } = await supabaseClient.auth.signUp({
+          email,
+          password: pass,
+          options: {
+            data: { full_name: name, province, city, school, role: 'siswa' }
+          }
+        });
+        if (error) return alert("Pendaftaran Gagal: " + error.message);
+        alert("Pendaftaran Berhasil! Silakan masuk dengan akun Anda.");
+      } else {
+        alert("Pendaftaran Berhasil (Mode Simulasi)! Silakan masuk.");
+      }
+      switchTab('login');
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const pass = document.getElementById('loginPassword').value;
+      const role = document.getElementById('loginRole').value;
+
+      if (supabaseClient) {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
+        if (error) return alert("Login Gagal: " + error.message);
+        const meta = data.user.user_metadata || {};
+        currentUser = { email: data.user.email, name: meta.full_name || email, role };
+      } else {
+        currentUser = { email, name: email.split('@')[0], role };
+      }
+
+      updateUserUI();
+      closeModal();
+
+      if (role === 'admin') {
+        showView('viewAdmin');
+      } else {
+        showView('viewLanding');
+      }
+    }
+
+    function updateUserUI() {
+      if (currentUser) {
+        document.getElementById('guestButtons').classList.add('hidden');
+        document.getElementById('userBadge').classList.remove('hidden');
+        document.getElementById('userBadge').classList.add('flex');
+        document.getElementById('btnLogout').classList.remove('hidden');
+
+        document.getElementById('userDisplayName').innerText = currentUser.name;
+        document.getElementById('roleLabel').innerText = currentUser.role;
+
+        if (currentUser.role === 'admin') {
+          document.getElementById('btnAdminView').classList.remove('hidden');
+        } else {
+          document.getElementById('btnAdminView').classList.add('hidden');
+        }
+      } else {
+        document.getElementById('guestButtons').classList.remove('hidden');
+        document.getElementById('userBadge').classList.add('hidden');
+        document.getElementById('btnLogout').classList.add('hidden');
+        document.getElementById('btnAdminView').classList.add('hidden');
+      }
+    }
+
+    function handleLogout() {
+      if (supabaseClient) supabaseClient.auth.signOut();
+      currentUser = null;
+      updateUserUI();
+      showView('viewLanding');
+    }
+
+    function showView(viewId) {
+      ['viewLanding', 'viewExam', 'viewAdmin'].forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+      });
+      document.getElementById(viewId).classList.remove('hidden');
+    }
+
+    function startExamSim() {
+      document.getElementById('examUserDetail').innerText = currentUser 
+        ? `Peserta: ${currentUser.name} (${currentUser.email})` 
+        : 'Peserta: Mode Tamu (Belum Login)';
+      showView('viewExam');
+    }
+  </script>
+</body>
+</html>
