@@ -10,7 +10,6 @@
   <style>
     .bg-navy-dark { background-color: #0b1329; }
     .bg-navy-card { background-color: #111c38; }
-    .bg-input-light { background-color: #f8fafc; }
   </style>
 </head>
 <body class="bg-navy-dark text-slate-100 font-sans min-h-screen flex flex-col selection:bg-blue-600 selection:text-white">
@@ -49,7 +48,7 @@
         </div>
 
         <button id="btnLogout" onclick="handleLogout()" class="hidden text-xs bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 font-semibold px-3 py-2 rounded-lg transition">
-          <i class="fa-solid fa-right-from-bracket"></i>
+          <i class="fa-solid fa-right-from-bracket"></i> Keluar
         </button>
       </div>
     </div>
@@ -78,7 +77,9 @@
           <button onclick="openModal('register')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold px-6 py-3 rounded-xl shadow-lg shadow-amber-500/20 text-sm flex items-center transition">
             <i class="fa-solid fa-trophy mr-2"></i> Top Skor & Leaderboard
           </button>
-          <button onclick="startExamSim()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-3 rounded-xl shadow-lg shadow-blue-600/30 text-sm flex items-center transition">
+          
+          <!-- TOMBOL SIMULASI UJIAN (Memerlukan Login) -->
+          <button onclick="checkAuthAndStartExam()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-3 rounded-xl shadow-lg shadow-blue-600/30 text-sm flex items-center transition">
             <i class="fa-solid fa-play mr-2"></i> Mulai Ujian Simulasi
           </button>
         </div>
@@ -106,7 +107,7 @@
       <div class="bg-navy-card p-4 rounded-xl border border-slate-800 flex justify-between items-center">
         <div>
           <h3 class="font-bold text-white text-base">Simulasi TKA Jaringan Komputer 2026</h3>
-          <p id="examUserDetail" class="text-xs text-slate-400">Peserta: Guest / Belum Login</p>
+          <p id="examUserDetail" class="text-xs text-slate-400">Peserta: Terverifikasi</p>
         </div>
         <button onclick="showView('viewLanding')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition">
           Selesaikan Ujian
@@ -303,6 +304,16 @@
 
     let currentUser = null;
 
+    // FUNGSI CEK OTENTIKASI SEBELUM MULAI SIMULASI
+    function checkAuthAndStartExam() {
+      if (!currentUser) {
+        alert("Silakan daftar atau masuk terlebih dahulu sebagai peserta untuk dapat mengikuti simulasi ujian!");
+        openModal('login');
+      } else {
+        startExamSim();
+      }
+    }
+
     function openModal(tab = 'register') {
       document.getElementById('authModal').classList.remove('hidden');
       switchTab(tab);
@@ -433,9 +444,7 @@
     }
 
     function startExamSim() {
-      document.getElementById('examUserDetail').innerText = currentUser 
-        ? `Peserta: ${currentUser.name} (${currentUser.email})` 
-        : 'Peserta: Mode Tamu (Belum Login)';
+      document.getElementById('examUserDetail').innerText = `Peserta: ${currentUser.name} (${currentUser.email})`;
       showView('viewExam');
     }
   </script>
