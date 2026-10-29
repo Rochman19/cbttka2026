@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulasi Ujian CBT & Portal Monitoring Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .no-select { user-select: none; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+
+  <!-- NAVBAR -->
+  <header class="bg-indigo-700 text-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <i class="fa-solid fa-graduation-cap text-2xl text-yellow-300"></i>
+        <div>
+          <h1 class="font-bold text-lg leading-tight">CBT Simulation & Monitoring</h1>
+          <p class="text-xs text-indigo-200">Sistem Ujian Online SMK TJKT / Umum</p>
+        </div>
+      </div>
+      
+      <div id="authStatus" class="flex items-center space-x-3">
+        <span id="userInfo" class="text-sm font-medium bg-indigo-800 px-3 py-1.5 rounded-full hidden">
+          <i class="fa-solid fa-user text-xs mr-1"></i> <span id="userEmailText">user@example.com</span>
+        </span>
+        <button id="btnRoleSwitch" onclick="switchRoleView()" class="hidden text-xs bg-yellow-400 hover:bg-yellow-500 text-indigo-950 font-bold px-3 py-1.5 rounded transition">
+          Switch to Admin View
+        </button>
+        <button id="btnLoginModal" onclick="openModal('authModal')" class="text-sm bg-white text-indigo-700 hover:bg-indigo-50 font-semibold px-4 py-1.5 rounded shadow transition">
+          Masuk / Daftar
+        </button>
+        <button id="btnLogout" onclick="handleLogout()" class="hidden text-sm bg-red-500 hover:bg-red-600 text-white font-semibold px-3 py-1.5 rounded shadow transition">
+          Keluar
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENT CONTAINER -->
+  <main class="max-w-7xl mx-auto w-full px-4 py-6 flex-grow">
+
+    <!-- SETUP CONFIGURATION NOTICE -->
+    <div id="configBanner" class="bg-amber-50 border-l-4 border-amber-500 p-4 mb-6 rounded shadow-sm text-amber-900 text-sm flex justify-between items-start">
+      <div>
+        <h3 class="font-bold mb-1"><i class="fa-solid fa-triangle-exclamation text-amber-600 mr-2"></i>Konfigurasi Supabase Belum Terhubung</h3>
+        <p>Aplikasi saat ini berjalan dalam mode simulasi lokal. Masukkan <strong>Supabase URL</strong> & <strong>Anon Key</strong> milikmu untuk mengaktifkan database real-time dan otentikasi.</p>
+      </div>
+      <button onclick="openModal('configModal')" class="ml-4 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs px-3 py-2 rounded shrink-0">
+        <i class="fa-solid fa-gear mr-1"></i> Seting Supabase
+      </button>
+    </div>
+
+    <!-- VIEW: LANDING / DASHBOARD PESERTA -->
+    <div id="viewUserDashboard" class="space-y-6">
+      <div class="bg-white rounded-lg shadow-sm p-6 border border-slate-200">
+        <h2 class="text-xl font-bold text-slate-800 mb-2">Selamat Datang di Portal Simulasi Ujian</h2>
+        <p class="text-slate-600 text-sm mb-4">Pilih paket ujian di bawah ini untuk memulai latihan atau ujian resmi.</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Card Ujian 1 -->
+          <div class="border rounded-lg p-5 hover:shadow-md transition bg-white flex flex-col justify-between">
+            <div>
+              <div class="flex justify-between items-center mb-3">
+                <span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded">TJKT</span>
+                <span class="text-xs text-slate-500"><i class="fa-regular fa-clock mr-1"></i> 30 Menit</span>
+              </div>
+              <h3 class="font-bold text-slate-800 text-lg mb-2">Simulasi TKA Jaringan Komputer</h3>
+              <p class="text-slate-600 text-xs mb-4">Uji pemahaman dasar subnetting, OSI layer, routing, dan protokol jaringan.</p>
+            </div>
+            <div>
+              <div class="text-xs text-slate-500 mb-3"><i class="fa-solid fa-file-lines mr-1"></i> 5 Soal Pilihan Ganda</div>
+              <button onclick="startExam()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded text-sm transition">
+                Mulai Ujian Sekarang
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: ENGINE UJIAN (CBT SIMULATOR) -->
+    <div id="viewExamEngine" class="hidden space-y-4">
+      <div class="bg-white rounded-lg shadow-sm p-4 border flex flex-wrap justify-between items-center gap-4">
+        <div>
+          <h2 class="font-bold text-slate-800 text-lg">Simulasi TKA Jaringan Komputer</h2>
+          <p class="text-xs text-slate-500" id="examParticipantLabel">Peserta: Guest / Belum Login</p>
+        </div>
+        <div class="flex items-center space-x-4">
+          <div class="bg-slate-100 border px-3 py-1.5 rounded flex items-center space-x-2">
+            <i class="fa-regular fa-clock text-indigo-600"></i>
+            <span id="timerText" class="font-mono font-bold text-indigo-700">30:00</span>
+          </div>
+          <button onclick="confirmSubmitExam()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-4 py-2 rounded transition">
+            <i class="fa-solid fa-check-double mr-1"></i> Selesaikan Ujian
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Area Soal -->
+        <div class="lg:col-span-2 bg-white rounded-lg shadow-sm p-6 border min-h-[400px] flex flex-col justify-between">
+          <div>
+            <div class="flex justify-between items-center pb-3 border-b mb-4">
+              <span class="font-bold text-slate-700">Soal No. <span id="currentQuestionNum">1</span></span>
+              <button onclick="toggleRaguRagu()" id="btnRagu" class="text-xs bg-amber-100 text-amber-800 hover:bg-amber-200 px-3 py-1.5 rounded font-medium transition">
+                <i class="fa-regular fa-flag mr-1"></i> Ragu-ragu
+              </button>
+            </div>
+
+            <p id="questionText" class="text-slate-800 font-medium mb-6 leading-relaxed">
+              Loading pertanyaan...
+            </p>
+
+            <div id="optionsContainer" class="space-y-3">
+              <!-- Pilihan Jawaban di-generate via JS -->
+            </div>
+          </div>
+
+          <div class="flex justify-between items-center pt-6 border-t mt-6">
+            <button onclick="prevQuestion()" id="btnPrev" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded font-semibold text-sm transition">
+              <i class="fa-solid fa-arrow-left mr-1"></i> Sebelumnya
+            </button>
+            <button onclick="nextQuestion()" id="btnNext" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded font-semibold text-sm transition">
+              Berikutnya <i class="fa-solid fa-arrow-right ml-1"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Navigasi Nomor Soal -->
+        <div class="bg-white rounded-lg shadow-sm p-5 border h-fit">
+          <h3 class="font-bold text-slate-800 text-sm mb-3 pb-2 border-b">Navigasi Soal</h3>
+          <div id="numberPalette" class="grid grid-cols-5 gap-2 mb-4">
+            <!-- Palette nomor di-generate via JS -->
+          </div>
+          <div class="text-xs space-y-2 border-t pt-3 text-slate-600">
+            <div class="flex items-center"><span class="w-3 h-3 bg-indigo-600 rounded-sm mr-2"></span> Dijawab</div>
+            <div class="flex items-center"><span class="w-3 h-3 bg-amber-400 rounded-sm mr-2"></span> Ragu-ragu</div>
+            <div class="flex items-center"><span class="w-3 h-3 bg-slate-200 border rounded-sm mr-2"></span> Belum dijawab</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: HASIL UJIAN PESERTA -->
+    <div id="viewResult" class="hidden max-w-xl mx-auto bg-white rounded-lg shadow-sm p-8 border text-center space-y-6">
+      <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl">
+        <i class="fa-solid fa-trophy"></i>
+      </div>
+      <div>
+        <h2 class="text-2xl font-bold text-slate-800">Ujian Selesai!</h2>
+        <p class="text-slate-500 text-sm mt-1">Hasil ujian kamu telah direkam.</p>
+      </div>
+
+      <div class="bg-slate-50 rounded-lg p-4 grid grid-cols-2 gap-4 border">
+        <div>
+          <span class="text-xs text-slate-500 block">Skor Akhir</span>
+          <span id="finalScore" class="text-3xl font-extrabold text-indigo-600">0</span>
+        </div>
+        <div>
+          <span class="text-xs text-slate-500 block">Status</span>
+          <span id="finalStatus" class="text-base font-bold text-emerald-600 mt-2 block">LULUS</span>
+        </div>
+      </div>
+
+      <button onclick="backToDashboard()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded transition">
+        Kembali ke Dashboard
+      </button>
+    </div>
+
+    <!-- VIEW: MONITORING ADMIN -->
+    <div id="viewAdminDashboard" class="hidden space-y-6">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-xl font-bold text-slate-800">Panel Monitoring Pengawas / Admin</h2>
+          <p class="text-xs text-slate-500">Pantau hasil ujian peserta secara real-time dari Supabase.</p>
+        </div>
+        <button onclick="fetchAdminResults()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-xs px-3 py-2 rounded transition">
+          <i class="fa-solid fa-rotate-right mr-1"></i> Refresh Data
+        </button>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
+        <table class="w-full text-left text-sm text-slate-600">
+          <thead class="bg-slate-50 text-slate-700 uppercase text-xs border-b">
+            <tr>
+              <th class="px-4 py-3">Waktu</th>
+              <th class="px-4 py-3">Nama / Email Peserta</th>
+              <th class="px-4 py-3">Ujian</th>
+              <th class="px-4 py-3">Skor</th>
+              <th class="px-4 py-3">Status</th>
+            </tr>
+          </thead>
+          <tbody id="adminTableBody" class="divide-y">
+            <!-- Data dimasukkan secara dinamis via JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL: LOGIN / REGISTER -->
+  <div id="authModal" class="fixed inset-0 bg-slate-900/50 hidden backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6 space-y-4">
+      <div class="flex justify-between items-center pb-2 border-b">
+        <h3 class="font-bold text-slate-800">Masuk ke Akun</h3>
+        <button onclick="closeModal('authModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form onsubmit="handleAuth(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Email</label>
+          <input type="email" id="authEmail" required class="w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Kata Sandi</label>
+          <input type="password" id="authPassword" required class="w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+        <div class="pt-2 flex space-x-2">
+          <button type="submit" onclick="authAction='login'" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded text-sm transition">Masuk</button>
+          <button type="submit" onclick="authAction='register'" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 rounded text-sm transition">Daftar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: CONFIGURATION SUPABASE -->
+  <div id="configModal" class="fixed inset-0 bg-slate-900/50 hidden backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full p-6 space-y-4">
+      <div class="flex justify-between items-center pb-2 border-b">
+        <h3 class="font-bold text-slate-800">Pengaturan Supabase</h3>
+        <button onclick="closeModal('configModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p class="text-xs text-slate-500">Dapatkan kredensial ini dari dashboard Proyek Supabase milikmu: <strong>Project Settings > API</strong>.</p>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Supabase URL</label>
+          <input type="text" id="cfgUrl" placeholder="https://xyzcompany.supabase.co" class="w-full border rounded px-3 py-2 text-sm outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Supabase Anon Key</label>
+          <input type="text" id="cfgKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..." class="w-full border rounded px-3 py-2 text-sm outline-none">
+        </div>
+        <button onclick="saveConfig()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded text-sm transition">
+          Simpan & Hubungkan
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // --- STATE MANAGEMENT ---
+    let supabaseClient = null;
+    let currentUser = null;
+    let currentRole = 'user'; // 'user' atau 'admin'
+    let authAction = 'login';
+
+    // Bank Soal Dummy
+    const examQuestions = [
+      {
+        id: 1,
+        question: "Berapa jumlah host maksimum yang dapat digunakan pada subnet 192.168.1.0/26?",
+        options: ["30", "62", "126", "254"],
+        answer: 1 // Indeks 1 -> 62
+      },
+      {
+        id: 2,
+        question: "Protokol yang bekerja pada Layer 3 (Network Layer) OSI model adalah...",
+        options: ["HTTP", "TCP", "IP", "FTP"],
+        answer: 2
+      },
+      {
+        id: 3,
+        question: "Perintah CLI untuk memeriksa konektivitas jaringan IP end-to-end adalah...",
+        options: ["ping", "tracert", "nslookup", "ipconfig"],
+        answer: 0
+      },
+      {
+        id: 4,
+        question: "Port standar yang digunakan oleh protokol HTTPS adalah...",
+        options: ["80", "21", "22", "443"],
+        answer: 3
+      },
+      {
+        id: 5,
+        question: "Perangkat jaringan yang berfungsi menghubungkan dua atau lebih segmen jaringan berbedapada Layer 3 dinamakan...",
+        options: ["Switch Unmanaged", "Router", "Hub", "Repeater"],
+        answer: 1
+      }
+    ];
+
+    let currentQIdx = 0;
+    let userAnswers = {}; // { 0: optionIdx, ... }
+    let flaggedQuestions = {}; // { 0: true, ... }
+    let mockResults = []; // Fallback jika Supabase belum diset
+
+    // --- INITIALIZATION ---
+    window.addEventListener('DOMContentLoaded', () => {
+      loadConfig();
+      renderQuestion();
+      renderPalette();
+    });
+
+    function loadConfig() {
+      const url = localStorage.getItem('sb_url');
+      const key = localStorage.getItem('sb_key');
+      if (url && key) {
+        try {
+          supabaseClient = supabase.createClient(url, key);
+          document.getElementById('configBanner').classList.add('hidden');
+          checkSession();
+        } catch (e) {
+          console.error("Gagal inisialisasi Supabase:", e);
+        }
+      }
+    }
+
+    function saveConfig() {
+      const url = document.getElementById('cfgUrl').value.trim();
+      const key = document.getElementById('cfgKey').value.trim();
+      if (url && key) {
+        localStorage.setItem('sb_url', url);
+        localStorage.setItem('sb_key', key);
+        location.reload();
+      }
+    }
+
+    async function checkSession() {
+      if (!supabaseClient) return;
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session) {
+        currentUser = session.user;
+        updateUserUI();
+      }
+    }
+
+    function updateUserUI() {
+      if (currentUser) {
+        document.getElementById('userInfo').classList.remove('hidden');
+        document.getElementById('userEmailText').innerText = currentUser.email;
+        document.getElementById('btnLoginModal').classList.add('hidden');
+        document.getElementById('btnLogout').classList.remove('hidden');
+        document.getElementById('btnRoleSwitch').classList.remove('hidden');
+        document.getElementById('examParticipantLabel').innerText = `Peserta: ${currentUser.email}`;
+      } else {
+        document.getElementById('userInfo').classList.add('hidden');
+        document.getElementById('btnLoginModal').classList.remove('hidden');
+        document.getElementById('btnLogout').classList.add('hidden');
+        document.getElementById('btnRoleSwitch').classList.add('hidden');
+      }
+    }
+
+    // --- AUTHENTICATION ---
+    async function handleAuth(e) {
+      e.preventDefault();
+      const email = document.getElementById('authEmail').value;
+      const password = document.getElementById('authPassword').value;
+
+      if (!supabaseClient) {
+        // Simulasi Auth Tanpa Supabase
+        currentUser = { email: email, id: 'mock-uid-' + Date.now() };
+        updateUserUI();
+        closeModal('authModal');
+        alert("Login Mode Simulasi (Belum terhubung ke Supabase DB).");
+        return;
+      }
+
+      try {
+        if (authAction === 'login') {
+          const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+          if (error) throw error;
+          currentUser = data.user;
+        } else {
+          const { data, error } = await supabaseClient.auth.signUp({ email, password });
+          if (error) throw error;
+          alert("Pendaftaran berhasil! Silakan masuk.");
+        }
+        updateUserUI();
+        closeModal('authModal');
+      } catch (err) {
+        alert("Error Auth: " + err.message);
+      }
+    }
+
+    async function handleLogout() {
+      if (supabaseClient) await supabaseClient.auth.signOut();
+      currentUser = null;
+      updateUserUI();
+      showView('viewUserDashboard');
+    }
+
+    // --- UI NAVIGATION ---
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    function showView(viewId) {
+      ['viewUserDashboard', 'viewExamEngine', 'viewResult', 'viewAdminDashboard'].forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+      });
+      document.getElementById(viewId).classList.remove('hidden');
+    }
+
+    function switchRoleView() {
+      if (currentRole === 'user') {
+        currentRole = 'admin';
+        document.getElementById('btnRoleSwitch').innerText = "Switch to User View";
+        showView('viewAdminDashboard');
+        fetchAdminResults();
+      } else {
+        currentRole = 'user';
+        document.getElementById('btnRoleSwitch').innerText = "Switch to Admin View";
+        showView('viewUserDashboard');
+      }
+    }
+
+    // --- EXAM ENGINE LOGIC ---
+    function startExam() {
+      currentQIdx = 0;
+      userAnswers = {};
+      flaggedQuestions = {};
+      renderQuestion();
+      renderPalette();
+      showView('viewExamEngine');
+    }
+
+    function renderQuestion() {
+      const q = examQuestions[currentQIdx];
+      document.getElementById('currentQuestionNum').innerText = currentQIdx + 1;
+      document.getElementById('questionText').innerText = q.question;
+
+      const container = document.getElementById('optionsContainer');
+      container.innerHTML = '';
+
+      q.options.forEach((opt, idx) => {
+        const isSelected = userAnswers[currentQIdx] === idx;
+        const btn = document.createElement('button');
+        btn.className = `w-full text-left p-3.5 border rounded-lg text-sm transition flex items-center space-x-3 ${
+          isSelected ? 'border-indigo-600 bg-indigo-50 text-indigo-900 font-semibold' : 'hover:bg-slate-50 text-slate-700'
+        }`;
+        btn.onclick = () => selectOption(idx);
+        btn.innerHTML = `
+          <span class="w-6 h-6 border rounded-full flex items-center justify-center text-xs ${isSelected ? 'bg-indigo-600 text-white border-indigo-600' : 'text-slate-500'}">
+            ${String.fromCharCode(65 + idx)}
+          </span>
+          <span>${opt}</span>
+        `;
+        container.appendChild(btn);
+      });
+
+      // Update Ragu State
+      const btnRagu = document.getElementById('btnRagu');
+      if (flaggedQuestions[currentQIdx]) {
+        btnRagu.className = "text-xs bg-amber-500 text-white px-3 py-1.5 rounded font-medium transition";
+      } else {
+        btnRagu.className = "text-xs bg-amber-100 text-amber-800 hover:bg-amber-200 px-3 py-1.5 rounded font-medium transition";
+      }
+    }
+
+    function selectOption(idx) {
+      userAnswers[currentQIdx] = idx;
+      renderQuestion();
+      renderPalette();
+    }
+
+    function toggleRaguRagu() {
+      flaggedQuestions[currentQIdx] = !flaggedQuestions[currentQIdx];
+      renderQuestion();
+      renderPalette();
+    }
+
+    function nextQuestion() {
+      if (currentQIdx < examQuestions.length - 1) {
+        currentQIdx++;
+        renderQuestion();
+        renderPalette();
+      }
+    }
+
+    function prevQuestion() {
+      if (currentQIdx > 0) {
+        currentQIdx--;
+        renderQuestion();
+        renderPalette();
+      }
+    }
+
+    function renderPalette() {
+      const pal = document.getElementById('numberPalette');
+      pal.innerHTML = '';
+      examQuestions.forEach((_, idx) => {
+        const isAnswered = userAnswers.hasOwnProperty(idx);
+        const isFlagged = flaggedQuestions[idx];
+        const isCurrent = idx === currentQIdx;
+
+        let bg = 'bg-slate-100 text-slate-700 hover:bg-slate-200';
+        if (isFlagged) bg = 'bg-amber-400 text-slate-900 font-bold';
+        else if (isAnswered) bg = 'bg-indigo-600 text-white font-bold';
+
+        const btn = document.createElement('button');
+        btn.className = `h-9 rounded text-xs transition border ${bg} ${isCurrent ? 'ring-2 ring-indigo-500 ring-offset-1' : ''}`;
+        btn.innerText = idx + 1;
+        btn.onclick = () => { currentQIdx = idx; renderQuestion(); renderPalette(); };
+        pal.appendChild(btn);
+      });
+    }
+
+    function confirmSubmitExam() {
+      if (confirm("Apakah kamu yakin ingin menyelesaikan ujian ini?")) {
+        calculateAndSubmitResult();
+      }
+    }
+
+    async function calculateAndSubmitResult() {
+      let correct = 0;
+      examQuestions.forEach((q, idx) => {
+        if (userAnswers[idx] === q.answer) correct++;
+      });
+
+      const score = Math.round((correct / examQuestions.length) * 100);
+      const isPassed = score >= 70;
+
+      document.getElementById('finalScore').innerText = score;
+      const statusEl = document.getElementById('finalStatus');
+      statusEl.innerText = isPassed ? "LULUS" : "TIDAK LULUS";
+      statusEl.className = `text-base font-bold mt-2 block ${isPassed ? 'text-emerald-600' : 'text-red-600'}`;
+
+      // Simpan ke Supabase jika terhubung
+      const resultPayload = {
+        user_email: currentUser ? currentUser.email : "guest@demo.com",
+        exam_name: "Simulasi TKA Jaringan Komputer",
+        score: score,
+        status: isPassed ? "LULUS" : "TIDAK LULUS",
+        created_at: new Date().toISOString()
+      };
+
+      if (supabaseClient) {
+        try {
+          await supabaseClient.from('exam_results').insert([resultPayload]);
+        } catch (e) {
+          console.error("Gagal mengirim hasil ke Supabase:", e);
+        }
+      } else {
+        mockResults.push(resultPayload);
+      }
+
+      showView('viewResult');
+    }
+
+    function backToDashboard() {
+      showView('viewUserDashboard');
+    }
+
+    // --- MONITORING ADMIN LOGIC ---
+    async function fetchAdminResults() {
+      const tbody = document.getElementById('adminTableBody');
+      tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-xs">Memuat data...</td></tr>';
+
+      let results = [];
+
+      if (supabaseClient) {
+        const { data, error } = await supabaseClient.from('exam_results').select('*').order('created_at', { ascending: false });
+        if (!error && data) results = data;
+      } else {
+        results = mockResults;
+      }
+
+      if (results.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-xs text-slate-400">Belum ada data ujian recorded.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = '';
+      results.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 border-b";
+        tr.innerHTML = `
+          <td class="px-4 py-3 text-xs">${new Date(row.created_at).toLocaleString('id-ID')}</td>
+          <td class="px-4 py-3 font-medium text-slate-800">${row.user_email}</td>
+          <td class="px-4 py-3 text-xs">${row.exam_name}</td>
+          <td class="px-4 py-3 font-bold ${row.score >= 70 ? 'text-emerald-600' : 'text-red-600'}">${row.score}</td>
+          <td class="px-4 py-3">
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded ${row.status === 'LULUS' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">
+              ${row.status}
+            </span>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+  </script>
+</body>
+</html>
