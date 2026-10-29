@@ -491,4 +491,59 @@
       const score = 100; // Contoh nilai kalkulasi sederhana
       const status = "LULUS";
 
-      const { error } = await supabaseClient.from('exam
+      const { error } = await supabaseClient.from('exam_results').insert([
+        {
+          user_id: currentUser.id,
+          user_email: currentUser.email,
+          user_name: currentUser.name,
+          school: currentUser.school,
+          province: currentUser.province,
+          city: currentUser.city,
+          exam_title: 'Simulasi TKA Jaringan Komputer 2026',
+          score: score,
+          status: status
+        }
+      ]);
+
+      if (error) {
+        alert("Ujian selesai, tetapi gagal menyimpan hasil ke Supabase: " + error.message);
+      } else {
+        alert(`Ujian Selesai! Skor Anda: ${score} (${status}). Data telah tersimpan di Supabase.`);
+      }
+      showView('viewLanding');
+    }
+
+    // MEMUAT DATA UNTUK MONITORING ADMIN DARI SUPABASE
+    async function loadAdminResults() {
+      const tbody = document.getElementById('adminTableBody');
+      tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-400">Memuat data dari Supabase...</td></tr>';
+
+      const { data, error } = await supabaseClient
+        .from('exam_results')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error || !data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-500">Belum ada data ujian masuk di Supabase.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = '';
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-900/40 border-b border-slate-800/60";
+        tr.innerHTML = `
+          <td class="p-3.5">
+            <div class="font-bold text-white">${row.user_name}</div>
+            <div class="text-[10px] text-slate-400">${row.user_email}</div>
+          </td>
+          <td class="p-3.5">${row.school || '-'}</td>
+          <td class="p-3.5">${row.city || '-'}, ${row.province || '-'}</td>
+          <td class="p-3.5 font-bold ${row.score >= 70 ? 'text-emerald-400' : 'text-red-400'}">${row.score} (${row.status})</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+  </script>
+</body>
+</html>
