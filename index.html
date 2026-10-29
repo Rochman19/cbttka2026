@@ -78,7 +78,6 @@
             <i class="fa-solid fa-trophy mr-2"></i> Top Skor & Leaderboard
           </button>
           
-          <!-- TOMBOL SIMULASI UJIAN (Memerlukan Login) -->
           <button onclick="checkAuthAndStartExam()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-3 rounded-xl shadow-lg shadow-blue-600/30 text-sm flex items-center transition">
             <i class="fa-solid fa-play mr-2"></i> Mulai Ujian Simulasi
           </button>
@@ -109,21 +108,21 @@
           <h3 class="font-bold text-white text-base">Simulasi TKA Jaringan Komputer 2026</h3>
           <p id="examUserDetail" class="text-xs text-slate-400">Peserta: Terverifikasi</p>
         </div>
-        <button onclick="showView('viewLanding')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition">
+        <button onclick="submitExamAndSave()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition">
           Selesaikan Ujian
         </button>
       </div>
       <div class="bg-navy-card p-6 rounded-xl border border-slate-800">
-        <p class="text-slate-300 text-sm mb-4">1. Berapakah jumlah IP Host maksimum pada subnet mask /26?</p>
+        <p class="text-slate-300 text-sm mb-4">1. Berapakah jumlah IP Host maksimum pada subnet mask /26 (255.255.255.192)?</p>
         <div class="space-y-2">
           <label class="block p-3 rounded-lg border border-slate-700 bg-slate-900/50 text-xs text-slate-300 hover:border-blue-500 cursor-pointer">
-            <input type="radio" name="q1" class="mr-2"> A. 30 Host
+            <input type="radio" name="q1" value="30" class="mr-2"> A. 30 Host
           </label>
           <label class="block p-3 rounded-lg border border-blue-500 bg-blue-950/40 text-xs text-blue-200 font-semibold cursor-pointer">
-            <input type="radio" name="q1" checked class="mr-2"> B. 62 Host
+            <input type="radio" name="q1" value="62" checked class="mr-2"> B. 62 Host
           </label>
           <label class="block p-3 rounded-lg border border-slate-700 bg-slate-900/50 text-xs text-slate-300 hover:border-blue-500 cursor-pointer">
-            <input type="radio" name="q1" class="mr-2"> C. 126 Host
+            <input type="radio" name="q1" value="126" class="mr-2"> C. 126 Host
           </label>
         </div>
       </div>
@@ -133,7 +132,7 @@
     <div id="viewAdmin" class="hidden space-y-6">
       <div class="flex justify-between items-center">
         <h2 class="text-xl font-bold text-white">Monitoring Hasil Ujian Siswa (Admin)</h2>
-        <button onclick="loadAdminResults()" class="bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 font-semibold px-3 py-2 rounded-lg border border-slate-700">Refresh</button>
+        <button onclick="loadAdminResults()" class="bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 font-semibold px-3 py-2 rounded-lg border border-slate-700">Refresh Data</button>
       </div>
       <div class="bg-navy-card border border-slate-800 rounded-xl overflow-hidden">
         <table class="w-full text-left text-xs text-slate-300">
@@ -142,11 +141,11 @@
               <th class="p-3.5">Siswa</th>
               <th class="p-3.5">Sekolah</th>
               <th class="p-3.5">Kota / Provinsi</th>
-              <th class="p-3.5">Skor</th>
+              <th class="p-3.5">Skor & Status</th>
             </tr>
           </thead>
           <tbody id="adminTableBody" class="divide-y divide-slate-800/60">
-            <tr><td colspan="4" class="p-4 text-center text-slate-500">Belum ada data masuk.</td></tr>
+            <tr><td colspan="4" class="p-4 text-center text-slate-500">Memuat data...</td></tr>
           </tbody>
         </table>
       </div>
@@ -154,7 +153,7 @@
 
   </main>
 
-  <!-- MODAL PENDAFTARAN & LOGIN (PERSIS GAMBAR PROMPT) -->
+  <!-- MODAL PENDAFTARAN & LOGIN -->
   <div id="authModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50 overflow-y-auto">
     <div class="bg-white text-slate-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden my-8">
       
@@ -190,18 +189,18 @@
             <label class="block text-xs font-bold text-slate-700 mb-1">Nama Lengkap:</label>
             <div class="relative">
               <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs"><i class="fa-regular fa-user"></i></span>
-              <input type="text" id="regFullName" required placeholder="Contoh: Muhammad Ihsan" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white transition">
+              <input type="text" id="regFullName" required placeholder="Contoh: Muhammad Ihsan" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-600 focus:bg-white transition">
             </div>
           </div>
 
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1">Provinsi:</label>
-              <input type="text" id="regProvince" required placeholder="Contoh: Jawa Barat" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white transition">
+              <input type="text" id="regProvince" required placeholder="Contoh: Jawa Barat" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-600 focus:bg-white transition">
             </div>
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1">Kabupaten/Kota:</label>
-              <input type="text" id="regCity" required placeholder="Contoh: Kota Cimahi" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white transition">
+              <input type="text" id="regCity" required placeholder="Contoh: Kota Cimahi" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-600 focus:bg-white transition">
             </div>
           </div>
 
@@ -209,7 +208,7 @@
             <label class="block text-xs font-bold text-slate-700 mb-1">Asal Sekolah:</label>
             <div class="relative">
               <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs"><i class="fa-solid fa-school"></i></span>
-              <input type="text" id="regSchool" required placeholder="SMKN 2 MAGETAN" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white transition">
+              <input type="text" id="regSchool" required placeholder="SMKN 2 MAGETAN" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-600 focus:bg-white transition">
             </div>
           </div>
 
@@ -217,7 +216,7 @@
             <label class="block text-xs font-bold text-slate-700 mb-1">Email:</label>
             <div class="relative">
               <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs"><i class="fa-regular fa-envelope"></i></span>
-              <input type="email" id="regEmail" required placeholder="akun email anda yang aktif" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white transition">
+              <input type="email" id="regEmail" required placeholder="akun email anda yang aktif" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-600 focus:bg-white transition">
             </div>
           </div>
 
@@ -225,7 +224,7 @@
             <label class="block text-xs font-bold text-slate-700 mb-1">Kata Sandi:</label>
             <div class="relative">
               <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs"><i class="fa-solid fa-lock"></i></span>
-              <input type="password" id="regPassword" required placeholder="Minimal 6 karakter" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-8 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white transition">
+              <input type="password" id="regPassword" required placeholder="Minimal 6 karakter" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-8 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-600 focus:bg-white transition">
               <span onclick="togglePass('regPassword')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 text-xs cursor-pointer hover:text-slate-600"><i class="fa-regular fa-eye"></i></span>
             </div>
           </div>
@@ -234,7 +233,7 @@
             <label class="block text-xs font-bold text-slate-700 mb-1">Konfirmasi Kata Sandi:</label>
             <div class="relative">
               <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 text-xs"><i class="fa-solid fa-lock"></i></span>
-              <input type="password" id="regConfirmPassword" required placeholder="Masukkan ulang kata sandi Anda" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-8 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white transition">
+              <input type="password" id="regConfirmPassword" required placeholder="Masukkan ulang kata sandi Anda" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-8 py-2.5 text-xs text-slate-800 focus:outline-none focus:border-blue-600 focus:bg-white transition">
               <span onclick="togglePass('regConfirmPassword')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 text-xs cursor-pointer hover:text-slate-600"><i class="fa-regular fa-eye"></i></span>
             </div>
           </div>
@@ -292,19 +291,35 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT LOGIC -->
+  <!-- JAVASCRIPT LOGIC WITH SUPABASE -->
   <script>
-    const SUPABASE_URL = localStorage.getItem('sb_url') || '';
-    const SUPABASE_KEY = localStorage.getItem('sb_key') || '';
-    let supabaseClient = null;
+    // --- KONFIGURASI SUPABASE KAMU ---
+    const SUPABASE_URL = "https://fhgdmwlvlkssggwdozxg.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_fdzI3T2oM8t4daUtylh_fg_mUeLoWkA";
 
-    if (SUPABASE_URL && SUPABASE_KEY) {
-      supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    }
+    // Inisialisasi Supabase Client
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let currentUser = null;
 
-    // FUNGSI CEK OTENTIKASI SEBELUM MULAI SIMULASI
+    // CEK PERSISTENSI SESI USER SAAT HALAMAN DIMUAT
+    window.addEventListener('DOMContentLoaded', async () => {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session) {
+        const userMeta = session.user.user_metadata || {};
+        currentUser = {
+          id: session.user.id,
+          email: session.user.email,
+          name: userMeta.full_name || session.user.email.split('@')[0],
+          school: userMeta.school || '-',
+          province: userMeta.province || '-',
+          city: userMeta.city || '-',
+          role: userMeta.role || 'siswa'
+        };
+        updateUserUI();
+      }
+    });
+
     function checkAuthAndStartExam() {
       if (!currentUser) {
         alert("Silakan daftar atau masuk terlebih dahulu sebagai peserta untuk dapat mengikuti simulasi ujian!");
@@ -350,6 +365,7 @@
       input.type = input.type === 'password' ? 'text' : 'password';
     }
 
+    // PENDAFTARAN SISWA KE SUPABASE
     async function handleRegister(e) {
       e.preventDefault();
       const name = document.getElementById('regFullName').value;
@@ -365,42 +381,62 @@
         return;
       }
 
-      if (supabaseClient) {
-        const { data, error } = await supabaseClient.auth.signUp({
-          email,
-          password: pass,
-          options: {
-            data: { full_name: name, province, city, school, role: 'siswa' }
+      const { data, error } = await supabaseClient.auth.signUp({
+        email: email,
+        password: pass,
+        options: {
+          data: {
+            full_name: name,
+            province: province,
+            city: city,
+            school: school,
+            role: 'siswa'
           }
-        });
-        if (error) return alert("Pendaftaran Gagal: " + error.message);
-        alert("Pendaftaran Berhasil! Silakan masuk dengan akun Anda.");
+        }
+      });
+
+      if (error) {
+        alert("Pendaftaran Gagal: " + error.message);
       } else {
-        alert("Pendaftaran Berhasil (Mode Simulasi)! Silakan masuk.");
+        alert("Pendaftaran Berhasil! Silakan masuk menggunakan akun Anda.");
+        switchTab('login');
       }
-      switchTab('login');
     }
 
+    // LOGIN KE SUPABASE
     async function handleLogin(e) {
       e.preventDefault();
       const email = document.getElementById('loginEmail').value;
       const pass = document.getElementById('loginPassword').value;
       const role = document.getElementById('loginRole').value;
 
-      if (supabaseClient) {
-        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password: pass });
-        if (error) return alert("Login Gagal: " + error.message);
-        const meta = data.user.user_metadata || {};
-        currentUser = { email: data.user.email, name: meta.full_name || email, role };
-      } else {
-        currentUser = { email, name: email.split('@')[0], role };
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: pass
+      });
+
+      if (error) {
+        alert("Login Gagal: " + error.message);
+        return;
       }
+
+      const userMeta = data.user.user_metadata || {};
+      currentUser = {
+        id: data.user.id,
+        email: data.user.email,
+        name: userMeta.full_name || email.split('@')[0],
+        school: userMeta.school || '-',
+        province: userMeta.province || '-',
+        city: userMeta.city || '-',
+        role: role
+      };
 
       updateUserUI();
       closeModal();
 
       if (role === 'admin') {
         showView('viewAdmin');
+        loadAdminResults();
       } else {
         showView('viewLanding');
       }
@@ -429,8 +465,8 @@
       }
     }
 
-    function handleLogout() {
-      if (supabaseClient) supabaseClient.auth.signOut();
+    async function handleLogout() {
+      await supabaseClient.auth.signOut();
       currentUser = null;
       updateUserUI();
       showView('viewLanding');
@@ -444,9 +480,15 @@
     }
 
     function startExamSim() {
-      document.getElementById('examUserDetail').innerText = `Peserta: ${currentUser.name} (${currentUser.email})`;
+      document.getElementById('examUserDetail').innerText = `Peserta: ${currentUser.name} (${currentUser.school})`;
       showView('viewExam');
     }
-  </script>
-</body>
-</html>
+
+    // MENYIMPAN HASIL UJIAN KE TABEL exam_results DI SUPABASE
+    async function submitExamAndSave() {
+      if (!currentUser) return;
+
+      const score = 100; // Contoh nilai kalkulasi sederhana
+      const status = "LULUS";
+
+      const { error } = await supabaseClient.from('exam
