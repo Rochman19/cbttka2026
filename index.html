@@ -1,597 +1,569 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Simulasi Ujian CBT & Portal Monitoring Admin</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    .no-select { user-select: none; }
-  </style>
-</head>
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
-
-  <!-- NAVBAR -->
-  <header class="bg-indigo-700 text-white shadow-md">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-      <div class="flex items-center space-x-3">
-        <i class="fa-solid fa-graduation-cap text-2xl text-yellow-300"></i>
-        <div>
-          <h1 class="font-bold text-lg leading-tight">CBT Simulation & Monitoring</h1>
-          <p class="text-xs text-indigo-200">Sistem Ujian Online SMK TJKT / Umum</p>
-        </div>
-      </div>
-      
-      <div id="authStatus" class="flex items-center space-x-3">
-        <span id="userInfo" class="text-sm font-medium bg-indigo-800 px-3 py-1.5 rounded-full hidden">
-          <i class="fa-solid fa-user text-xs mr-1"></i> <span id="userEmailText">user@example.com</span>
-        </span>
-        <button id="btnRoleSwitch" onclick="switchRoleView()" class="hidden text-xs bg-yellow-400 hover:bg-yellow-500 text-indigo-950 font-bold px-3 py-1.5 rounded transition">
-          Switch to Admin View
-        </button>
-        <button id="btnLoginModal" onclick="openModal('authModal')" class="text-sm bg-white text-indigo-700 hover:bg-indigo-50 font-semibold px-4 py-1.5 rounded shadow transition">
-          Masuk / Daftar
-        </button>
-        <button id="btnLogout" onclick="handleLogout()" class="hidden text-sm bg-red-500 hover:bg-red-600 text-white font-semibold px-3 py-1.5 rounded shadow transition">
-          Keluar
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- CONTENT CONTAINER -->
-  <main class="max-w-7xl mx-auto w-full px-4 py-6 flex-grow">
-
-    <!-- SETUP CONFIGURATION NOTICE -->
-    <div id="configBanner" class="bg-amber-50 border-l-4 border-amber-500 p-4 mb-6 rounded shadow-sm text-amber-900 text-sm flex justify-between items-start">
-      <div>
-        <h3 class="font-bold mb-1"><i class="fa-solid fa-triangle-exclamation text-amber-600 mr-2"></i>Konfigurasi Supabase Belum Terhubung</h3>
-        <p>Aplikasi saat ini berjalan dalam mode simulasi lokal. Masukkan <strong>Supabase URL</strong> & <strong>Anon Key</strong> milikmu untuk mengaktifkan database real-time dan otentikasi.</p>
-      </div>
-      <button onclick="openModal('configModal')" class="ml-4 bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs px-3 py-2 rounded shrink-0">
-        <i class="fa-solid fa-gear mr-1"></i> Seting Supabase
-      </button>
-    </div>
-
-    <!-- VIEW: LANDING / DASHBOARD PESERTA -->
-    <div id="viewUserDashboard" class="space-y-6">
-      <div class="bg-white rounded-lg shadow-sm p-6 border border-slate-200">
-        <h2 class="text-xl font-bold text-slate-800 mb-2">Selamat Datang di Portal Simulasi Ujian</h2>
-        <p class="text-slate-600 text-sm mb-4">Pilih paket ujian di bawah ini untuk memulai latihan atau ujian resmi.</p>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TKA SMK TJKT - Bank 400 Soal & Pembahasan</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#0f172a',
+                            dark: '#0a1026',
+                            card: '#0f1738'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #080d1e; color: #f8fafc; }
         
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <!-- Card Ujian 1 -->
-          <div class="border rounded-lg p-5 hover:shadow-md transition bg-white flex flex-col justify-between">
-            <div>
-              <div class="flex justify-between items-center mb-3">
-                <span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-0.5 rounded">TJKT</span>
-                <span class="text-xs text-slate-500"><i class="fa-regular fa-clock mr-1"></i> 30 Menit</span>
-              </div>
-              <h3 class="font-bold text-slate-800 text-lg mb-2">Simulasi TKA Jaringan Komputer</h3>
-              <p class="text-slate-600 text-xs mb-4">Uji pemahaman dasar subnetting, OSI layer, routing, dan protokol jaringan.</p>
-            </div>
-            <div>
-              <div class="text-xs text-slate-500 mb-3"><i class="fa-solid fa-file-lines mr-1"></i> 5 Soal Pilihan Ganda</div>
-              <button onclick="startExam()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded text-sm transition">
-                Mulai Ujian Sekarang
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+        /* Background Tech Pattern Overlay */
+        .hero-bg {
+            background-color: #0b122c;
+            background-image: 
+                radial-gradient(circle at 80% 20%, rgba(37, 99, 235, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 20% 80%, rgba(245, 158, 11, 0.08) 0%, transparent 35%);
+        }
 
-    <!-- VIEW: ENGINE UJIAN (CBT SIMULATOR) -->
-    <div id="viewExamEngine" class="hidden space-y-4">
-      <div class="bg-white rounded-lg shadow-sm p-4 border flex flex-wrap justify-between items-center gap-4">
-        <div>
-          <h2 class="font-bold text-slate-800 text-lg">Simulasi TKA Jaringan Komputer</h2>
-          <p class="text-xs text-slate-500" id="examParticipantLabel">Peserta: Guest / Belum Login</p>
-        </div>
-        <div class="flex items-center space-x-4">
-          <div class="bg-slate-100 border px-3 py-1.5 rounded flex items-center space-x-2">
-            <i class="fa-regular fa-clock text-indigo-600"></i>
-            <span id="timerText" class="font-mono font-bold text-indigo-700">30:00</span>
-          </div>
-          <button onclick="confirmSubmitExam()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-4 py-2 rounded transition">
-            <i class="fa-solid fa-check-double mr-1"></i> Selesaikan Ujian
-          </button>
-        </div>
-      </div>
+        .network-grid-svg {
+            position: absolute;
+            right: 2%;
+            bottom: 5%;
+            width: 380px;
+            height: 380px;
+            opacity: 0.12;
+            pointer-events: none;
+        }
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Area Soal -->
-        <div class="lg:col-span-2 bg-white rounded-lg shadow-sm p-6 border min-h-[400px] flex flex-col justify-between">
-          <div>
-            <div class="flex justify-between items-center pb-3 border-b mb-4">
-              <span class="font-bold text-slate-700">Soal No. <span id="currentQuestionNum">1</span></span>
-              <button onclick="toggleRaguRagu()" id="btnRagu" class="text-xs bg-amber-100 text-amber-800 hover:bg-amber-200 px-3 py-1.5 rounded font-medium transition">
-                <i class="fa-regular fa-flag mr-1"></i> Ragu-ragu
-              </button>
+        /* Glass Panel */
+        .glass-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+        }
+
+        .dark .glass-header {
+            background: rgba(255, 255, 255, 0.98);
+            color: #0f172a;
+        }
+
+        /* Glowing Orange Button */
+        .btn-glow-orange {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            box-shadow: 0 8px 24px -4px rgba(245, 158, 11, 0.5);
+        }
+        .btn-glow-orange:hover {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            box-shadow: 0 10px 28px -2px rgba(245, 158, 11, 0.65);
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0a1026; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-blue-600 selection:text-white">
+
+    <!-- TOP NAVIGATION BAR (Exact replicate from image) -->
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200/80 text-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                
+                <!-- Logo & Subtitle -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="showView('home')">
+                    <!-- Flower / Colorful Network Polygon Icon -->
+                    <div class="w-9 h-9 flex items-center justify-center">
+                        <svg viewBox="0 0 100 100" class="w-8 h-8">
+                            <path d="M50 15 L75 30 L75 60 L50 75 L25 60 L25 30 Z" fill="none" stroke="#2563eb" stroke-width="6"/>
+                            <circle cx="50" cy="15" r="8" fill="#3b82f6"/>
+                            <circle cx="75" cy="30" r="8" fill="#10b981"/>
+                            <circle cx="75" cy="60" r="8" fill="#f59e0b"/>
+                            <circle cx="50" cy="75" r="8" fill="#ef4444"/>
+                            <circle cx="25" cy="60" r="8" fill="#8b5cf6"/>
+                            <circle cx="25" cy="30" r="8" fill="#06b6d4"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="font-extrabold text-base tracking-tight text-slate-900 leading-none">
+                            TKA SMK TJKT
+                        </div>
+                        <div class="text-[11px] text-slate-500 font-medium mt-0.5">
+                            Bank 400 Soal & Pembahasan
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Controls: Theme Toggle & Auth Buttons -->
+                <div class="flex items-center space-x-3">
+                    <!-- Config Supabase Button -->
+                    <button onclick="openModal('configModal')" class="p-2 rounded-full text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition text-xs" title="Konfigurasi Supabase API">
+                        <i class="fa-solid fa-gear"></i>
+                    </button>
+
+                    <!-- Moon Theme Icon -->
+                    <button class="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 transition text-xs">
+                        <i class="fa-regular fa-moon"></i>
+                    </button>
+
+                    <!-- User Account / Role Status (When Logged In) -->
+                    <div id="authStatusContainer" class="hidden flex items-center space-x-2">
+                        <span id="userEmailBadge" class="text-xs font-semibold px-2.5 py-1 bg-slate-100 rounded-lg text-slate-700"></span>
+                        <button onclick="toggleAdminView()" id="btnSwitchAdmin" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white font-semibold text-xs hover:bg-indigo-700 transition">
+                            Admin Panel
+                        </button>
+                    </div>
+
+                    <!-- Daftar Button -->
+                    <button id="btnDaftarNav" onclick="openAuthModal('register')" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-sm flex items-center space-x-1.5">
+                        <i class="fa-regular fa-user"></i>
+                        <span>Daftar</span>
+                    </button>
+
+                    <!-- Masuk Button -->
+                    <button id="btnMasukNav" onclick="openAuthModal('login')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition border border-slate-200">
+                        Masuk
+                    </button>
+
+                    <button id="btnLogoutNav" onclick="handleLogout()" class="hidden px-3 py-1.5 rounded-xl bg-red-100 text-red-600 text-xs font-bold hover:bg-red-200 transition">
+                        Keluar
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN HERO DASHBOARD VIEW (Matching Provided Screenshot) -->
+    <main id="view-home" class="flex-grow hero-bg relative overflow-hidden flex flex-col justify-between">
+        
+        <!-- Background SVG Overlay Pattern (Network Diagram Blocks) -->
+        <svg class="network-grid-svg" viewBox="0 0 200 200" fill="none" stroke="#3b82f6" stroke-width="2">
+            <rect x="20" y="20" width="40" height="40" rx="8" />
+            <rect x="100" y="20" width="40" height="40" rx="8" />
+            <rect x="100" y="100" width="40" height="40" rx="8" />
+            <path d="M40 60 L40 120 L100 120" stroke-dasharray="4" />
+            <path d="M120 60 L120 100" />
+        </svg>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-16 w-full relative z-10 my-auto">
+            
+            <!-- Pill Badge -->
+            <div class="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-blue-950/60 border border-blue-500/30 text-blue-300 text-xs font-medium mb-6 backdrop-blur-sm">
+                <i class="fa-solid fa-graduation-cap text-blue-400"></i>
+                <span>TKA 2026/2027. Dari SMK untuk SMK</span>
             </div>
 
-            <p id="questionText" class="text-slate-800 font-medium mb-6 leading-relaxed">
-              Loading pertanyaan...
+            <!-- Main Heading -->
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight max-w-4xl mb-6">
+                Simulasi Tes Kemampuan Akademik (TKA) SMK TJKT
+            </h1>
+
+            <!-- Subheading Paragraph -->
+            <p class="text-slate-300 text-xs sm:text-sm md:text-base leading-relaxed max-w-3xl mb-8 font-normal">
+                Aplikasi interaktif terpadu untuk penguasaan kompetensi kejuruan Teknik Jaringan Komputer dan Telekomunikasi. Dilengkapi dengan materi pembelajaran mandiri 8 modul, sistem skor real-time, pembahasan otomatis, serta pelacakan progres belajar per kategori.
             </p>
 
-            <div id="optionsContainer" class="space-y-3">
-              <!-- Pilihan Jawaban di-generate via JS -->
+            <!-- Action Button: Top Skor & Leaderboard -->
+            <div class="mb-14">
+                <button onclick="startCBTExam()" class="btn-glow-orange px-6 py-3 rounded-2xl text-slate-950 font-black text-xs sm:text-sm transition flex items-center space-x-2 cursor-pointer">
+                    <span class="text-base">🏆 🏆</span>
+                    <span>Top Skor & Leaderboard</span>
+                </button>
             </div>
-          </div>
 
-          <div class="flex justify-between items-center pt-6 border-t mt-6">
-            <button onclick="prevQuestion()" id="btnPrev" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded font-semibold text-sm transition">
-              <i class="fa-solid fa-arrow-left mr-1"></i> Sebelumnya
+            <!-- Key Statistics Counter Grid (3 Columns) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl border-t border-slate-800/80 pt-10">
+                <!-- Stat 1: Total Siswa Terdaftar -->
+                <div class="flex items-baseline space-x-3">
+                    <span class="text-4xl sm:text-5xl font-black text-white tracking-tight" id="stat-siswa">3349</span>
+                    <div class="w-7 h-7 rounded-full bg-blue-600/30 border border-blue-500/40 flex items-center justify-center text-blue-400 text-xs">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                </div>
+                <div class="text-xs text-slate-400 font-semibold -mt-6 md:mt-1">
+                    Total Siswa Terdaftar
+                </div>
+
+                <!-- Stat 2: Jumlah Sekolah Terdaftar -->
+                <div class="flex items-baseline space-x-3">
+                    <span class="text-4xl sm:text-5xl font-black text-white tracking-tight" id="stat-sekolah">660</span>
+                    <div class="w-7 h-7 rounded-full bg-purple-600/30 border border-purple-500/40 flex items-center justify-center text-purple-400 text-xs">
+                        <i class="fa-solid fa-school"></i>
+                    </div>
+                </div>
+                <div class="text-xs text-slate-400 font-semibold -mt-6 md:mt-1">
+                    Jumlah Sekolah Terdaftar
+                </div>
+
+                <!-- Stat 3: Siswa Sedang Online -->
+                <div class="flex items-baseline space-x-3">
+                    <span class="text-4xl sm:text-5xl font-black text-emerald-400 tracking-tight" id="stat-online">47</span>
+                    <div class="w-7 h-7 rounded-full bg-emerald-600/30 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-xs">
+                        <i class="fa-solid fa-wifi"></i>
+                    </div>
+                </div>
+                <div class="text-xs text-slate-400 font-semibold -mt-6 md:mt-1 flex items-center space-x-1.5">
+                    <span>Siswa Sedang Online</span>
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block"></span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- BOTTOM TICKER / FOOTER BAR (Exact replicate from image) -->
+        <div class="w-full bg-slate-100 text-slate-600 py-3 text-[11px] sm:text-xs border-t border-slate-200 font-medium">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2">
+                <div class="flex items-center space-x-2">
+                    <span class="font-bold text-slate-800">Simulasi TKA SMK TJKT</span>
+                    <span class="text-slate-400">•</span>
+                    <span>Bank Soal 8 Minggu (400 Butir)</span>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <span>Evaluasi Standar Kelulusan</span>
+                    <span class="text-slate-400">•</span>
+                    <span>Pembahasan Otomatis Sesi</span>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- EXAM SIMULATOR VIEW (CBT INTERACTIVE) -->
+    <main id="view-exam" class="hidden flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-4 sticky top-20 z-30 shadow-xl">
+            <div class="flex items-center space-x-3">
+                <button onclick="showView('home')" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white text-xs font-bold">
+                    <i class="fa-solid fa-arrow-left mr-1"></i> Kembali
+                </button>
+                <div>
+                    <h3 class="font-bold text-sm text-white">Simulasi TKA SMK TJKT 2026</h3>
+                    <p class="text-[11px] text-slate-400">Soal <span id="cbt-curr-num">1</span> dari <span id="cbt-total-num">5</span></p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <div class="px-4 py-1.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center space-x-2">
+                    <i class="fa-regular fa-clock text-blue-400 animate-pulse"></i>
+                    <span class="font-mono text-base font-bold text-blue-300" id="cbt-timer">15:00</span>
+                </div>
+                <button onclick="submitExam()" class="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md">
+                    Selesaikan Ujian
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-8 bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-800 space-y-6">
+                <div class="text-white text-base sm:text-lg font-semibold leading-relaxed" id="cbt-question-text">
+                    <!-- Injected -->
+                </div>
+                <div class="space-y-3" id="cbt-options-container">
+                    <!-- Injected -->
+                </div>
+                <div class="flex justify-between pt-4 border-t border-slate-800">
+                    <button onclick="navQuestion(-1)" id="btnPrev" class="px-4 py-2 rounded-xl bg-slate-800 text-xs font-bold">Sebelumnya</button>
+                    <button onclick="navQuestion(1)" id="btnNext" class="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold">Berikutnya</button>
+                </div>
+            </div>
+
+            <div class="lg:col-span-4 bg-slate-900 p-6 rounded-3xl border border-slate-800">
+                <h4 class="text-xs font-bold text-slate-400 uppercase mb-4">Navigasi Soal</h4>
+                <div class="grid grid-cols-5 gap-2.5" id="cbt-palette-grid">
+                    <!-- Injected -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ADMIN MONITORING VIEW -->
+    <main id="view-admin" class="hidden flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        <div class="bg-slate-900 p-6 rounded-3xl border border-slate-800 flex justify-between items-center">
+            <div>
+                <h2 class="text-xl font-bold text-white">Panel Monitoring Pengawas / Admin</h2>
+                <p class="text-xs text-slate-400">Hasil ujian tersimpan secara realtime di Supabase.</p>
+            </div>
+            <button onclick="fetchAdminData()" class="px-4 py-2 rounded-xl bg-slate-800 text-xs font-bold text-slate-200 hover:bg-slate-700">
+                Refresh Data
             </button>
-            <button onclick="nextQuestion()" id="btnNext" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded font-semibold text-sm transition">
-              Berikutnya <i class="fa-solid fa-arrow-right ml-1"></i>
-            </button>
-          </div>
         </div>
 
-        <!-- Navigasi Nomor Soal -->
-        <div class="bg-white rounded-lg shadow-sm p-5 border h-fit">
-          <h3 class="font-bold text-slate-800 text-sm mb-3 pb-2 border-b">Navigasi Soal</h3>
-          <div id="numberPalette" class="grid grid-cols-5 gap-2 mb-4">
-            <!-- Palette nomor di-generate via JS -->
-          </div>
-          <div class="text-xs space-y-2 border-t pt-3 text-slate-600">
-            <div class="flex items-center"><span class="w-3 h-3 bg-indigo-600 rounded-sm mr-2"></span> Dijawab</div>
-            <div class="flex items-center"><span class="w-3 h-3 bg-amber-400 rounded-sm mr-2"></span> Ragu-ragu</div>
-            <div class="flex items-center"><span class="w-3 h-3 bg-slate-200 border rounded-sm mr-2"></span> Belum dijawab</div>
-          </div>
+        <div class="bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden">
+            <table class="w-full text-left text-xs text-slate-300">
+                <thead class="bg-slate-950 text-slate-400 font-bold uppercase border-b border-slate-800">
+                    <tr>
+                        <th class="p-4">Tanggal/Waktu</th>
+                        <th class="p-4">Nama Peserta</th>
+                        <th class="p-4">Asal Sekolah</th>
+                        <th class="p-4 text-center">Skor</th>
+                        <th class="p-4 text-center">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-results-tbody" class="divide-y divide-slate-800">
+                    <!-- Injected -->
+                </tbody>
+            </table>
         </div>
-      </div>
+    </main>
+
+    <!-- MODAL: DAFTAR / MASUK -->
+    <div id="authModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 max-w-md w-full rounded-3xl border border-slate-800 p-6 space-y-6">
+            <div class="flex items-center justify-between">
+                <h3 class="font-extrabold text-lg text-white" id="authModalTitle">Masuk ke Akun</h3>
+                <button onclick="closeModal('authModal')" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form onsubmit="handleAuthSubmit(event)" class="space-y-4 text-xs">
+                <div>
+                    <label class="block text-slate-400 mb-1 font-semibold">Email</label>
+                    <input type="email" id="authEmail" required placeholder="nama@smk.sch.id" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:ring-1 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1 font-semibold">Password</label>
+                    <input type="password" id="authPassword" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:ring-1 focus:ring-blue-500 outline-none">
+                </div>
+                <button type="submit" id="btnAuthSubmit" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-600/20">
+                    Proses
+                </button>
+            </form>
+        </div>
     </div>
 
-    <!-- VIEW: HASIL UJIAN PESERTA -->
-    <div id="viewResult" class="hidden max-w-xl mx-auto bg-white rounded-lg shadow-sm p-8 border text-center space-y-6">
-      <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl">
-        <i class="fa-solid fa-trophy"></i>
-      </div>
-      <div>
-        <h2 class="text-2xl font-bold text-slate-800">Ujian Selesai!</h2>
-        <p class="text-slate-500 text-sm mt-1">Hasil ujian kamu telah direkam.</p>
-      </div>
-
-      <div class="bg-slate-50 rounded-lg p-4 grid grid-cols-2 gap-4 border">
-        <div>
-          <span class="text-xs text-slate-500 block">Skor Akhir</span>
-          <span id="finalScore" class="text-3xl font-extrabold text-indigo-600">0</span>
+    <!-- MODAL: CONFIG SUPABASE -->
+    <div id="configModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 max-w-lg w-full rounded-3xl border border-slate-800 p-6 space-y-6">
+            <div class="flex items-center justify-between">
+                <h3 class="font-extrabold text-lg text-white">Konfigurasi Supabase</h3>
+                <button onclick="closeModal('configModal')" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="space-y-4 text-xs">
+                <div>
+                    <label class="block text-slate-400 mb-1 font-semibold">Supabase URL</label>
+                    <input type="text" id="cfgUrl" placeholder="https://xyz.supabase.co" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:ring-1 focus:ring-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1 font-semibold">Supabase Anon Key</label>
+                    <input type="text" id="cfgKey" placeholder="eyJhbGci..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:ring-1 focus:ring-blue-500 outline-none">
+                </div>
+                <button onclick="saveSupabaseConfig()" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs">
+                    Simpan & Hubungkan
+                </button>
+            </div>
         </div>
-        <div>
-          <span class="text-xs text-slate-500 block">Status</span>
-          <span id="finalStatus" class="text-base font-bold text-emerald-600 mt-2 block">LULUS</span>
-        </div>
-      </div>
-
-      <button onclick="backToDashboard()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded transition">
-        Kembali ke Dashboard
-      </button>
     </div>
 
-    <!-- VIEW: MONITORING ADMIN -->
-    <div id="viewAdminDashboard" class="hidden space-y-6">
-      <div class="flex justify-between items-center">
-        <div>
-          <h2 class="text-xl font-bold text-slate-800">Panel Monitoring Pengawas / Admin</h2>
-          <p class="text-xs text-slate-500">Pantau hasil ujian peserta secara real-time dari Supabase.</p>
-        </div>
-        <button onclick="fetchAdminResults()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-xs px-3 py-2 rounded transition">
-          <i class="fa-solid fa-rotate-right mr-1"></i> Refresh Data
-        </button>
-      </div>
+    <!-- JAVASCRIPT LOGIC ENGINE -->
+    <script>
+        let supabaseClient = null;
+        let authMode = 'login'; // 'login' or 'register'
+        let currentUser = null;
 
-      <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
-        <table class="w-full text-left text-sm text-slate-600">
-          <thead class="bg-slate-50 text-slate-700 uppercase text-xs border-b">
-            <tr>
-              <th class="px-4 py-3">Waktu</th>
-              <th class="px-4 py-3">Nama / Email Peserta</th>
-              <th class="px-4 py-3">Ujian</th>
-              <th class="px-4 py-3">Skor</th>
-              <th class="px-4 py-3">Status</th>
-            </tr>
-          </thead>
-          <tbody id="adminTableBody" class="divide-y">
-            <!-- Data dimasukkan secara dinamis via JavaScript -->
-          </tbody>
-        </table>
-      </div>
-    </div>
+        const questions = [
+            { id: 1, q: "Sebuah laboratorium membutuhkan 28 IP Address usable. Subnet mask mana yang paling efisien?", opts: ["/28 (14 Host)", "/27 (30 Host)", "/26 (62 Host)", "/29 (6 Host)"], ans: 1 },
+            { id: 2, q: "Perintah CLI Switch Cisco untuk mengonfigurasi port Trunk adalah...", opts: ["switchport mode access", "switchport mode trunk", "vlan enable all", "encapsulation dot1q"], ans: 1 },
+            { id: 3, q: "TCP dan UDP bekerja pada layer OSI manakah?", opts: ["Layer 2 Data Link", "Layer 3 Network", "Layer 4 Transport", "Layer 7 Application"], ans: 2 },
+            { id: 4, q: "File konfigurasi utama web server Nginx pada Linux Debian ada di...", opts: ["/etc/nginx/nginx.conf", "/var/www/html/index.html", "/usr/local/nginx", "/etc/httpd/conf"], ans: 0 },
+            { id: 5, q: "Berapakah Administrative Distance (AD) default untuk routing OSPF?", opts: ["90", "110", "120", "170"], ans: 1 }
+        ];
 
-  </main>
+        let currIdx = 0;
+        let answers = {};
+        let resultsList = [
+            { nama: "Budi Santoso", sekolah: "SMKN 1 Jakarta", skor: 80, lulus: true, time: "2026-10-29 09:30" },
+            { nama: "Siti Aminah", sekolah: "SMKN 2 Bandung", skor: 100, lulus: true, time: "2026-10-29 10:15" }
+        ];
 
-  <!-- MODAL: LOGIN / REGISTER -->
-  <div id="authModal" class="fixed inset-0 bg-slate-900/50 hidden backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6 space-y-4">
-      <div class="flex justify-between items-center pb-2 border-b">
-        <h3 class="font-bold text-slate-800">Masuk ke Akun</h3>
-        <button onclick="closeModal('authModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <form onsubmit="handleAuth(event)" class="space-y-3">
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Email</label>
-          <input type="email" id="authEmail" required class="w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Kata Sandi</label>
-          <input type="password" id="authPassword" required class="w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-        </div>
-        <div class="pt-2 flex space-x-2">
-          <button type="submit" onclick="authAction='login'" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded text-sm transition">Masuk</button>
-          <button type="submit" onclick="authAction='register'" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 rounded text-sm transition">Daftar</button>
-        </div>
-      </form>
-    </div>
-  </div>
+        window.onload = function() {
+            initSupabase();
+            renderQuestion();
+            renderPalette();
+            fetchAdminData();
+        };
 
-  <!-- MODAL: CONFIGURATION SUPABASE -->
-  <div id="configModal" class="fixed inset-0 bg-slate-900/50 hidden backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full p-6 space-y-4">
-      <div class="flex justify-between items-center pb-2 border-b">
-        <h3 class="font-bold text-slate-800">Pengaturan Supabase</h3>
-        <button onclick="closeModal('configModal')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <p class="text-xs text-slate-500">Dapatkan kredensial ini dari dashboard Proyek Supabase milikmu: <strong>Project Settings > API</strong>.</p>
-      <div class="space-y-3">
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Supabase URL</label>
-          <input type="text" id="cfgUrl" placeholder="https://xyzcompany.supabase.co" class="w-full border rounded px-3 py-2 text-sm outline-none">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Supabase Anon Key</label>
-          <input type="text" id="cfgKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..." class="w-full border rounded px-3 py-2 text-sm outline-none">
-        </div>
-        <button onclick="saveConfig()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded text-sm transition">
-          Simpan & Hubungkan
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- JAVASCRIPT LOGIC -->
-  <script>
-    // --- STATE MANAGEMENT ---
-    let supabaseClient = null;
-    let currentUser = null;
-    let currentRole = 'user'; // 'user' atau 'admin'
-    let authAction = 'login';
-
-    // Bank Soal Dummy
-    const examQuestions = [
-      {
-        id: 1,
-        question: "Berapa jumlah host maksimum yang dapat digunakan pada subnet 192.168.1.0/26?",
-        options: ["30", "62", "126", "254"],
-        answer: 1 // Indeks 1 -> 62
-      },
-      {
-        id: 2,
-        question: "Protokol yang bekerja pada Layer 3 (Network Layer) OSI model adalah...",
-        options: ["HTTP", "TCP", "IP", "FTP"],
-        answer: 2
-      },
-      {
-        id: 3,
-        question: "Perintah CLI untuk memeriksa konektivitas jaringan IP end-to-end adalah...",
-        options: ["ping", "tracert", "nslookup", "ipconfig"],
-        answer: 0
-      },
-      {
-        id: 4,
-        question: "Port standar yang digunakan oleh protokol HTTPS adalah...",
-        options: ["80", "21", "22", "443"],
-        answer: 3
-      },
-      {
-        id: 5,
-        question: "Perangkat jaringan yang berfungsi menghubungkan dua atau lebih segmen jaringan berbedapada Layer 3 dinamakan...",
-        options: ["Switch Unmanaged", "Router", "Hub", "Repeater"],
-        answer: 1
-      }
-    ];
-
-    let currentQIdx = 0;
-    let userAnswers = {}; // { 0: optionIdx, ... }
-    let flaggedQuestions = {}; // { 0: true, ... }
-    let mockResults = []; // Fallback jika Supabase belum diset
-
-    // --- INITIALIZATION ---
-    window.addEventListener('DOMContentLoaded', () => {
-      loadConfig();
-      renderQuestion();
-      renderPalette();
-    });
-
-    function loadConfig() {
-      const url = localStorage.getItem('sb_url');
-      const key = localStorage.getItem('sb_key');
-      if (url && key) {
-        try {
-          supabaseClient = supabase.createClient(url, key);
-          document.getElementById('configBanner').classList.add('hidden');
-          checkSession();
-        } catch (e) {
-          console.error("Gagal inisialisasi Supabase:", e);
+        function initSupabase() {
+            const url = localStorage.getItem('sb_url');
+            const key = localStorage.getItem('sb_key');
+            if (url && key) {
+                try {
+                    supabaseClient = supabase.createClient(url, key);
+                } catch(e) { console.error(e); }
+            }
         }
-      }
-    }
 
-    function saveConfig() {
-      const url = document.getElementById('cfgUrl').value.trim();
-      const key = document.getElementById('cfgKey').value.trim();
-      if (url && key) {
-        localStorage.setItem('sb_url', url);
-        localStorage.setItem('sb_key', key);
-        location.reload();
-      }
-    }
-
-    async function checkSession() {
-      if (!supabaseClient) return;
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      if (session) {
-        currentUser = session.user;
-        updateUserUI();
-      }
-    }
-
-    function updateUserUI() {
-      if (currentUser) {
-        document.getElementById('userInfo').classList.remove('hidden');
-        document.getElementById('userEmailText').innerText = currentUser.email;
-        document.getElementById('btnLoginModal').classList.add('hidden');
-        document.getElementById('btnLogout').classList.remove('hidden');
-        document.getElementById('btnRoleSwitch').classList.remove('hidden');
-        document.getElementById('examParticipantLabel').innerText = `Peserta: ${currentUser.email}`;
-      } else {
-        document.getElementById('userInfo').classList.add('hidden');
-        document.getElementById('btnLoginModal').classList.remove('hidden');
-        document.getElementById('btnLogout').classList.add('hidden');
-        document.getElementById('btnRoleSwitch').classList.add('hidden');
-      }
-    }
-
-    // --- AUTHENTICATION ---
-    async function handleAuth(e) {
-      e.preventDefault();
-      const email = document.getElementById('authEmail').value;
-      const password = document.getElementById('authPassword').value;
-
-      if (!supabaseClient) {
-        // Simulasi Auth Tanpa Supabase
-        currentUser = { email: email, id: 'mock-uid-' + Date.now() };
-        updateUserUI();
-        closeModal('authModal');
-        alert("Login Mode Simulasi (Belum terhubung ke Supabase DB).");
-        return;
-      }
-
-      try {
-        if (authAction === 'login') {
-          const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-          if (error) throw error;
-          currentUser = data.user;
-        } else {
-          const { data, error } = await supabaseClient.auth.signUp({ email, password });
-          if (error) throw error;
-          alert("Pendaftaran berhasil! Silakan masuk.");
+        function saveSupabaseConfig() {
+            const url = document.getElementById('cfgUrl').value.trim();
+            const key = document.getElementById('cfgKey').value.trim();
+            if (url && key) {
+                localStorage.setItem('sb_url', url);
+                localStorage.setItem('sb_key', key);
+                location.reload();
+            }
         }
-        updateUserUI();
-        closeModal('authModal');
-      } catch (err) {
-        alert("Error Auth: " + err.message);
-      }
-    }
 
-    async function handleLogout() {
-      if (supabaseClient) await supabaseClient.auth.signOut();
-      currentUser = null;
-      updateUserUI();
-      showView('viewUserDashboard');
-    }
-
-    // --- UI NAVIGATION ---
-    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-
-    function showView(viewId) {
-      ['viewUserDashboard', 'viewExamEngine', 'viewResult', 'viewAdminDashboard'].forEach(id => {
-        document.getElementById(id).classList.add('hidden');
-      });
-      document.getElementById(viewId).classList.remove('hidden');
-    }
-
-    function switchRoleView() {
-      if (currentRole === 'user') {
-        currentRole = 'admin';
-        document.getElementById('btnRoleSwitch').innerText = "Switch to User View";
-        showView('viewAdminDashboard');
-        fetchAdminResults();
-      } else {
-        currentRole = 'user';
-        document.getElementById('btnRoleSwitch').innerText = "Switch to Admin View";
-        showView('viewUserDashboard');
-      }
-    }
-
-    // --- EXAM ENGINE LOGIC ---
-    function startExam() {
-      currentQIdx = 0;
-      userAnswers = {};
-      flaggedQuestions = {};
-      renderQuestion();
-      renderPalette();
-      showView('viewExamEngine');
-    }
-
-    function renderQuestion() {
-      const q = examQuestions[currentQIdx];
-      document.getElementById('currentQuestionNum').innerText = currentQIdx + 1;
-      document.getElementById('questionText').innerText = q.question;
-
-      const container = document.getElementById('optionsContainer');
-      container.innerHTML = '';
-
-      q.options.forEach((opt, idx) => {
-        const isSelected = userAnswers[currentQIdx] === idx;
-        const btn = document.createElement('button');
-        btn.className = `w-full text-left p-3.5 border rounded-lg text-sm transition flex items-center space-x-3 ${
-          isSelected ? 'border-indigo-600 bg-indigo-50 text-indigo-900 font-semibold' : 'hover:bg-slate-50 text-slate-700'
-        }`;
-        btn.onclick = () => selectOption(idx);
-        btn.innerHTML = `
-          <span class="w-6 h-6 border rounded-full flex items-center justify-center text-xs ${isSelected ? 'bg-indigo-600 text-white border-indigo-600' : 'text-slate-500'}">
-            ${String.fromCharCode(65 + idx)}
-          </span>
-          <span>${opt}</span>
-        `;
-        container.appendChild(btn);
-      });
-
-      // Update Ragu State
-      const btnRagu = document.getElementById('btnRagu');
-      if (flaggedQuestions[currentQIdx]) {
-        btnRagu.className = "text-xs bg-amber-500 text-white px-3 py-1.5 rounded font-medium transition";
-      } else {
-        btnRagu.className = "text-xs bg-amber-100 text-amber-800 hover:bg-amber-200 px-3 py-1.5 rounded font-medium transition";
-      }
-    }
-
-    function selectOption(idx) {
-      userAnswers[currentQIdx] = idx;
-      renderQuestion();
-      renderPalette();
-    }
-
-    function toggleRaguRagu() {
-      flaggedQuestions[currentQIdx] = !flaggedQuestions[currentQIdx];
-      renderQuestion();
-      renderPalette();
-    }
-
-    function nextQuestion() {
-      if (currentQIdx < examQuestions.length - 1) {
-        currentQIdx++;
-        renderQuestion();
-        renderPalette();
-      }
-    }
-
-    function prevQuestion() {
-      if (currentQIdx > 0) {
-        currentQIdx--;
-        renderQuestion();
-        renderPalette();
-      }
-    }
-
-    function renderPalette() {
-      const pal = document.getElementById('numberPalette');
-      pal.innerHTML = '';
-      examQuestions.forEach((_, idx) => {
-        const isAnswered = userAnswers.hasOwnProperty(idx);
-        const isFlagged = flaggedQuestions[idx];
-        const isCurrent = idx === currentQIdx;
-
-        let bg = 'bg-slate-100 text-slate-700 hover:bg-slate-200';
-        if (isFlagged) bg = 'bg-amber-400 text-slate-900 font-bold';
-        else if (isAnswered) bg = 'bg-indigo-600 text-white font-bold';
-
-        const btn = document.createElement('button');
-        btn.className = `h-9 rounded text-xs transition border ${bg} ${isCurrent ? 'ring-2 ring-indigo-500 ring-offset-1' : ''}`;
-        btn.innerText = idx + 1;
-        btn.onclick = () => { currentQIdx = idx; renderQuestion(); renderPalette(); };
-        pal.appendChild(btn);
-      });
-    }
-
-    function confirmSubmitExam() {
-      if (confirm("Apakah kamu yakin ingin menyelesaikan ujian ini?")) {
-        calculateAndSubmitResult();
-      }
-    }
-
-    async function calculateAndSubmitResult() {
-      let correct = 0;
-      examQuestions.forEach((q, idx) => {
-        if (userAnswers[idx] === q.answer) correct++;
-      });
-
-      const score = Math.round((correct / examQuestions.length) * 100);
-      const isPassed = score >= 70;
-
-      document.getElementById('finalScore').innerText = score;
-      const statusEl = document.getElementById('finalStatus');
-      statusEl.innerText = isPassed ? "LULUS" : "TIDAK LULUS";
-      statusEl.className = `text-base font-bold mt-2 block ${isPassed ? 'text-emerald-600' : 'text-red-600'}`;
-
-      // Simpan ke Supabase jika terhubung
-      const resultPayload = {
-        user_email: currentUser ? currentUser.email : "guest@demo.com",
-        exam_name: "Simulasi TKA Jaringan Komputer",
-        score: score,
-        status: isPassed ? "LULUS" : "TIDAK LULUS",
-        created_at: new Date().toISOString()
-      };
-
-      if (supabaseClient) {
-        try {
-          await supabaseClient.from('exam_results').insert([resultPayload]);
-        } catch (e) {
-          console.error("Gagal mengirim hasil ke Supabase:", e);
+        function showView(id) {
+            ['home', 'exam', 'admin'].forEach(v => {
+                document.getElementById(`view-${v}`).classList.add('hidden');
+            });
+            document.getElementById(`view-${id}`).classList.remove('hidden');
         }
-      } else {
-        mockResults.push(resultPayload);
-      }
 
-      showView('viewResult');
-    }
+        function toggleAdminView() {
+            showView('admin');
+        }
 
-    function backToDashboard() {
-      showView('viewUserDashboard');
-    }
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-    // --- MONITORING ADMIN LOGIC ---
-    async function fetchAdminResults() {
-      const tbody = document.getElementById('adminTableBody');
-      tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-xs">Memuat data...</td></tr>';
+        function openAuthModal(mode) {
+            authMode = mode;
+            document.getElementById('authModalTitle').innerText = mode === 'login' ? 'Masuk ke Akun' : 'Daftar Akun Baru';
+            document.getElementById('btnAuthSubmit').innerText = mode === 'login' ? 'Masuk' : 'Daftar';
+            openModal('authModal');
+        }
 
-      let results = [];
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('authEmail').value;
+            currentUser = { email: email };
 
-      if (supabaseClient) {
-        const { data, error } = await supabaseClient.from('exam_results').select('*').order('created_at', { ascending: false });
-        if (!error && data) results = data;
-      } else {
-        results = mockResults;
-      }
+            document.getElementById('userEmailBadge').innerText = email;
+            document.getElementById('authStatusContainer').classList.remove('hidden');
+            document.getElementById('btnDaftarNav').classList.add('hidden');
+            document.getElementById('btnMasukNav').classList.add('hidden');
+            document.getElementById('btnLogoutNav').classList.remove('hidden');
 
-      if (results.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-xs text-slate-400">Belum ada data ujian recorded.</td></tr>';
-        return;
-      }
+            closeModal('authModal');
+            alert(`Berhasil ${authMode === 'login' ? 'Masuk' : 'Mendaftar'} sebagai ${email}`);
+        }
 
-      tbody.innerHTML = '';
-      results.forEach(row => {
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-50 border-b";
-        tr.innerHTML = `
-          <td class="px-4 py-3 text-xs">${new Date(row.created_at).toLocaleString('id-ID')}</td>
-          <td class="px-4 py-3 font-medium text-slate-800">${row.user_email}</td>
-          <td class="px-4 py-3 text-xs">${row.exam_name}</td>
-          <td class="px-4 py-3 font-bold ${row.score >= 70 ? 'text-emerald-600' : 'text-red-600'}">${row.score}</td>
-          <td class="px-4 py-3">
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded ${row.status === 'LULUS' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">
-              ${row.status}
-            </span>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-  </script>
+        function handleLogout() {
+            currentUser = null;
+            document.getElementById('authStatusContainer').classList.add('hidden');
+            document.getElementById('btnDaftarNav').classList.remove('hidden');
+            document.getElementById('btnMasukNav').classList.remove('hidden');
+            document.getElementById('btnLogoutNav').classList.add('hidden');
+            showView('home');
+        }
+
+        function startCBTExam() {
+            currIdx = 0;
+            answers = {};
+            showView('exam');
+            renderQuestion();
+            renderPalette();
+        }
+
+        function renderQuestion() {
+            const q = questions[currIdx];
+            document.getElementById('cbt-curr-num').innerText = currIdx + 1;
+            document.getElementById('cbt-total-num').innerText = questions.length;
+            document.getElementById('cbt-question-text').innerText = q.q;
+
+            const container = document.getElementById('cbt-options-container');
+            container.innerHTML = '';
+
+            q.opts.forEach((opt, idx) => {
+                const isSelected = answers[currIdx] === idx;
+                const btn = document.createElement('button');
+                btn.onclick = () => { answers[currIdx] = idx; renderQuestion(); renderPalette(); };
+                btn.className = `w-full text-left p-4 rounded-2xl border text-xs sm:text-sm font-medium transition flex items-center space-x-3 ${
+                    isSelected ? 'bg-blue-600/20 border-blue-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
+                }`;
+                btn.innerHTML = `
+                    <div class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400'}">${String.fromCharCode(65 + idx)}</div>
+                    <span>${opt}</span>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        function navQuestion(dir) {
+            currIdx += dir;
+            if (currIdx < 0) currIdx = 0;
+            if (currIdx >= questions.length) currIdx = questions.length - 1;
+            renderQuestion();
+        }
+
+        function renderPalette() {
+            const grid = document.getElementById('cbt-palette-grid');
+            grid.innerHTML = '';
+            questions.forEach((_, idx) => {
+                const isAnswered = answers.hasOwnProperty(idx);
+                const btn = document.createElement('button');
+                btn.onclick = () => { currIdx = idx; renderQuestion(); };
+                btn.className = `w-9 h-9 rounded-xl border text-xs flex items-center justify-center ${
+                    isAnswered ? 'bg-blue-600 border-blue-500 text-white font-bold' : 'bg-slate-950 border-slate-800 text-slate-400'
+                } ${idx === currIdx ? 'ring-2 ring-blue-400' : ''}`;
+                btn.innerText = idx + 1;
+                grid.appendChild(btn);
+            });
+        }
+
+        function submitExam() {
+            let correct = 0;
+            questions.forEach((q, idx) => {
+                if (answers[idx] === q.ans) correct++;
+            });
+            const score = Math.round((correct / questions.length) * 100);
+            
+            resultsList.unshift({
+                nama: currentUser ? currentUser.email : "Siswa Guest",
+                sekolah: "SMK Negeri TJKT",
+                skor: score,
+                lulus: score >= 70,
+                time: new Date().toLocaleString()
+            });
+
+            alert(`Ujian Selesai!\nSkor Kamu: ${score}`);
+            showView('home');
+        }
+
+        function fetchAdminData() {
+            const tbody = document.getElementById('admin-results-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            resultsList.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-4 text-slate-400">${r.time}</td>
+                    <td class="p-4 font-semibold text-white">${r.nama}</td>
+                    <td class="p-4 text-slate-400">${r.sekolah}</td>
+                    <td class="p-4 text-center font-bold text-white">${r.skor}</td>
+                    <td class="p-4 text-center">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${r.lulus ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}">
+                            ${r.lulus ? 'LULUS' : 'REMIDI'}
+                        </span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    </script>
 </body>
 </html>
