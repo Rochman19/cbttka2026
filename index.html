@@ -293,16 +293,16 @@
 
   <!-- JAVASCRIPT LOGIC WITH SUPABASE -->
   <script>
-    // --- KONFIGURASI SUPABASE (DISEMAKAN & DIPERBAIKI) ---
-    const SUPABASE_URL = "https://fhgdmwlvlkssggwdozxg.supabase.co"; // URL Murni tanpa /rest/v1/
+    // KONFIGURASI SUPABASE
+    const SUPABASE_URL = "https://fhgdmwlvlkssggwdozxg.supabase.co/rest/v1/";
     const SUPABASE_KEY = "sb_publishable_fdzI3T2oM8t4daUtylh_fg_mUeLoWkA";
 
-    // Inisialisasi Supabase Client
+    // Inisialisasi Client
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let currentUser = null;
 
-    // CEK SESI LOGIN DARI SUPABASE SAAT HALAMAN DIBUKA
+    // CEK SESI USER
     window.addEventListener('DOMContentLoaded', async () => {
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (session) {
@@ -365,7 +365,7 @@
       input.type = input.type === 'password' ? 'text' : 'password';
     }
 
-    // FUNGSI PENDAFTARAN KE SUPABASE
+    // PENDAFTARAN
     async function handleRegister(e) {
       e.preventDefault();
       const name = document.getElementById('regFullName').value;
@@ -403,7 +403,7 @@
       }
     }
 
-    // FUNGSI LOGIN KE SUPABASE
+    // LOGIN
     async function handleLogin(e) {
       e.preventDefault();
       const email = document.getElementById('loginEmail').value;
@@ -484,7 +484,7 @@
       showView('viewExam');
     }
 
-    // SIMPAN HASIL UJIAN KE SUPABASE (TABEL exam_results)
+    // SIMPAN HASIL UJIAN
     async function submitExamAndSave() {
       if (!currentUser) return;
 
@@ -513,7 +513,7 @@
       showView('viewLanding');
     }
 
-    // MONITORING NILAI PESERTA DARI SUPABASE UNTUK ADMIN
+    // LOAD HASIL UNTUK ADMIN
     async function loadAdminResults() {
       const tbody = document.getElementById('adminTableBody');
       tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-400">Memuat data dari Supabase...</td></tr>';
